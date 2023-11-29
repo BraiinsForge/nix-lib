@@ -28,16 +28,20 @@
 
           craneLibOrig = crane.mkLib pkgs;
           craneLibWithRegistries = craneLibOrig.appendCrateRegistries (import ./registries.nix craneLibOrig);
-
-          utils = import ./utils.nix { inherit nixpkgs localSystem; };
         in
         {
           craneLib = craneLibWithRegistries;
-          mkCrossPkgs = utils.mkNixpkgs;
 
           mkRustLib = { craneLib ? craneLibWithRegistries }: import ./rust {
             inherit pkgs craneLib docker-spider nix-filter localSystem;
           };
+
+          mkCrossPkgs = { arch, extras ? { } }:
+            import nixpkgs ({
+              inherit localSystem;
+              crossSystem.config = arch;
+              config.allowUnsupportedSystem = true;
+            } // extras);
         };
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
