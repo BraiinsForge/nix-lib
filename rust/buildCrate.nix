@@ -134,7 +134,7 @@ let
     cargoExtraArgs = "-p ${crate_def.name}";
     doCheck = false;
     # add suffix to binaries
-    postInstall = ''
+    postInstall = lib.optionalString workspace.addSuffixToBinaries ''
       for file in $out/bin/*; do
       	mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
       done
