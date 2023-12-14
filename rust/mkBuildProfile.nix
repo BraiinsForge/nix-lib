@@ -58,7 +58,9 @@ let
         depsBuildBuild = with build_pkgs; (lib.optionals buildingForWindows [ stdenv.cc windows.pthreads ]) ++ [ libiconv ];
 
         CARGO_PROFILE = rustProfile;
-        doNotLinkInheritedArtifacts = true; # https://github.com/ipetkov/crane/issues/385
+
+        # NOTE: This was previously enabled, but I disabled it because it seems to have no effect (zstd is used instead of symlinking by default since Crane 0.15.0)
+        # doNotLinkInheritedArtifacts = true; # https://github.com/ipetkov/crane/issues/385
 
         strictDeps = true;
       };

@@ -29,10 +29,6 @@ let
     pname = "extended-workspace-${crate_def.name}" + profile.suffix;
     version = "0.0.0";
     doInstallCargoArtifacts = true;
-
-    # TODO: This is unfortunate. If we use `use-symlink` (default), then it can't create files in the target directory in craneLib.buildPackage due to "Permission denied (os error 13)".
-    installCargoArtifactsMode = "use-zstd";
-
     src = craneLib.mkDummySrc { src = workspace.manifests_src; };
     doCheck = false;
   });
