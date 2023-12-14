@@ -83,6 +83,16 @@ let
     version = "0.0.0";
     cargoExtraArgs = "--all-targets";
     doCheck = false;
+    preBuild = ''
+      echo "checking Cargo.lock"
+      cp Cargo.lock Cargo.lock.orig
+      cargo metadata --format-version 1 >/dev/null
+      if ! ${pkgs.git}/bin/git diff --exit-code --no-index Cargo.lock.orig Cargo.lock; then
+        echo -e "\033[31merror\033[0m: Cargo.lock is not up to date!"
+        exit 1
+      fi
+      mv Cargo.lock.orig Cargo.lock
+    '';
   });
 
   shell = pkgs.mkShell (commonArgs // {
