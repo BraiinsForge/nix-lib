@@ -1,8 +1,8 @@
 # inherited args
 inputs: workspace: profile:
 # this fn's args
-crate_def: { env ? { } }:
-let crate = { inherit env; }; in
+crate_def: { env ? { }, features ? [ ], noDefaultFeatures ? false } @ aa:
+let crate = { inherit env features noDefaultFeatures; }; in
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -14,9 +14,17 @@ let
 in
 with builtins;
 let
+  featuresArgs =
+    let
+      noDefaultFeaturesArg = if crate.noDefaultFeatures then "--no-default-features" else "";
+      commaSeparatedFeatures = lib.concatStringsSep "," crate.features;
+      featuresArg = if crate.features == [ ] then "" else "--features " + commaSeparatedFeatures;
+    in
+    lib.concatStringsSep " " [ noDefaultFeaturesArg featuresArg ];
+
   # extend common artifacts with additional artifacts needed just for the current package
   cargoArtifacts = craneLib.cargoBuild (commonArgs // {
-    cargoExtraArgs = "-p ${crate_def.name}";
+    cargoExtraArgs = "-p ${crate_def.name} ${featuresArgs}";
     cargoArtifacts = profile.commonCargoArtifacts;
     pname = "extended-workspace-${crate_def.name}" + profile.suffix;
     version = "0.0.0";
@@ -131,7 +139,7 @@ let
   };
 
   package = craneLib.buildPackage (commonArgs // packageCommonArgs // {
-    cargoExtraArgs = "-p ${crate_def.name}";
+    cargoExtraArgs = "-p ${crate_def.name} ${featuresArgs}";
     doCheck = false;
     # add suffix to binaries
     postInstall = lib.optionalString workspace.addSuffixToBinaries ''
