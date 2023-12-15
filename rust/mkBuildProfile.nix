@@ -1,7 +1,7 @@
 # inherited args
 inputs: workspace:
 # this fn's args
-{ build_pkgs ? inputs.pkgs, suffix ? null, rustCrossTarget ? null, rustProfile ? "dev", mode ? "bin", upx ? false, env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ] }:
+{ build_pkgs ? inputs.pkgs, suffix ? null, rustCrossTarget ? null, rustProfile ? "dev", mode ? "bin", upx ? "none", env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ] }:
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;

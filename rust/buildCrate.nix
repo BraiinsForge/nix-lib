@@ -140,20 +140,29 @@ let
     # and so we cannot compile all deps
   };
 
-  package = craneLib.buildPackage (commonArgs // packageCommonArgs // {
-    cargoExtraArgs = (if binmode then "--bin ${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
-    doCheck = false;
-    # add suffix to binaries
-    postInstall = lib.optionalString workspace.addSuffixToBinaries ''
-      for file in $out/bin/*; do
-      	mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
-      done
-    '' + lib.optionalString crate.upx ''
-      for file in $out/bin/*; do
-        ${pkgs.upx}/bin/upx "$file"
-      done
-    '';
-  });
+  package =
+    let
+      doUpx = crate.upx != "none";
+      upxArgs = {
+        none = "";
+        default = "";
+        lzma = "--lzma";
+      }.${crate.upx};
+    in
+    craneLib.buildPackage (commonArgs // packageCommonArgs // {
+      cargoExtraArgs = (if binmode then "--bin ${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
+      doCheck = false;
+      # add suffix to binaries
+      postInstall = lib.optionalString workspace.addSuffixToBinaries ''
+        for file in $out/bin/*; do
+          mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
+        done
+      '' + lib.optionalString doUpx ''
+        for file in $out/bin/*; do
+          ${pkgs.upx}/bin/upx ${upxArgs} "$file"
+        done
+      '';
+    });
 
 in
 package
