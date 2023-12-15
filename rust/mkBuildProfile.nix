@@ -63,6 +63,9 @@ let
         # doNotLinkInheritedArtifacts = true; # https://github.com/ipetkov/crane/issues/385
 
         strictDeps = true;
+
+        # incremental compilation is always counterproductive in sandbox
+        CARGO_INCREMENTAL = "0";
       };
       cargoCrossEnvVars = lib.optionalAttrs (rustCrossTarget != null) (makeCargoCrossEnvVars build_pkgs.stdenv rustCrossTarget);
       rustFlagsHack = mkRustFlagsHack (rustflags ++ dummy_src_rustflags);
