@@ -28,10 +28,11 @@ let
   binmode = if crate.mode == "bin" then true else (if crate.mode == "package" then false else throw "unknown mode '${crate.mode}', must be either 'bin' or 'package'");
 
   # extend common artifacts with additional artifacts needed just for the current package
-  cargoArtifacts = craneLib.cargoBuild (commonArgs // {
-    cargoExtraArgs = (if binmode then "--bin crane-dummy-${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
+  cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
+    buildPhaseCargoCommand = "cargoWithProfile build " + (if binmode then "--bin crane-dummy-${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
     cargoArtifacts = profile.commonCargoArtifacts;
-    pname = "extended-workspace-${crate_def.name}" + profile.suffix;
+    pname = "${crate_def.name}" + profile.suffix;
+    pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
     src = craneLib.mkDummySrc { src = workspace.manifests_src; };
