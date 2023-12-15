@@ -1,8 +1,8 @@
 # inherited args
 inputs: workspace: profile:
 # this fn's args
-crate_def: { mode ? profile.mode, env ? { }, features ? [ ], noDefaultFeatures ? false }:
-let crate = { inherit mode env features noDefaultFeatures; }; in
+crate_def: { mode ? profile.mode, upx ? profile.upx, env ? { }, features ? [ ], noDefaultFeatures ? false }:
+let crate = { inherit mode upx env features noDefaultFeatures; }; in
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -147,6 +147,10 @@ let
     postInstall = lib.optionalString workspace.addSuffixToBinaries ''
       for file in $out/bin/*; do
       	mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
+      done
+    '' + lib.optionalString crate.upx ''
+      for file in $out/bin/*; do
+        ${pkgs.upx}/bin/upx "$file"
       done
     '';
   });
