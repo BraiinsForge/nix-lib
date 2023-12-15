@@ -114,6 +114,14 @@ let
     doInstallCargoArtifacts = false;
   };
 
+  # derivation that runs `cargo build` on the entire workspace
+  build = craneLib.cargoBuild (commonArgs // workspaceCommonArgs // {
+    version = "0.0.0";
+    cargoExtraArgs = "--workspace";
+    fixupPhase = ":";
+    doCheck = false;
+  });
+
   # derivation that runs `cargo clippy` on the entire workspace
   clippy = craneLib.cargoClippy (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
@@ -134,7 +142,7 @@ in
 {
   deps = commonCargoArtifacts;
   inherit shell;
-  inherit clippy test;
+  inherit build clippy test;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit build_pkgs rustCrossTarget rustProfile env rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
