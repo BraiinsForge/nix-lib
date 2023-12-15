@@ -155,18 +155,5 @@ let
     '';
   });
 
-  #  clippy = craneLib.cargoClippy (commonArgs // packageCommonArgs // {
-  #    cargoExtraArgs = "-p ${crate_def.name}";
-  #    cargoClippyExtraArgs = "--all-targets -- -D warnings";
-  #    fixupPhase = ":";
-  #    doCheck = false;
-  #  });
-  #
-  #  test = craneLib.cargoTest (commonArgs // packageCommonArgs // {
-  #    # TODO: cargo test works only for the current package (only with -p), some sources are missing, probably
-  #    cargoExtraArgs = "-p ${crate_def.name}";
-  #    fixupPhase = ":";
-  #    doCheck = true;
-  #  });
 in
 package
