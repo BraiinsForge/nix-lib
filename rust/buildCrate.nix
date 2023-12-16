@@ -25,11 +25,14 @@ let
   # NOTE: `package` and `bin` modes behave differently: https://github.com/rust-lang/cargo/issues/8157
   #   - `--bin` implies `--workspace` and includes union of cargo features from all workspace crates (binaries are larger)
   #   - `--package` causes rebuilds of some dependencies, because `cargo build` in previous step uses `--workspace`
-  binmode = if crate.mode == "bin" then true else (if crate.mode == "package" then false else throw "unknown mode '${crate.mode}', must be either 'bin' or 'package'");
 
   # extend common artifacts with additional artifacts needed just for the current package
   cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
-    buildPhaseCargoCommand = "cargoWithProfile build " + (if binmode then "--bin crane-dummy-${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
+    buildPhaseCargoCommand = lib.concatStringsSep " " [
+      "cargoWithProfile build"
+      { bin = "--bin crane-dummy-${crate_def.name}"; package = "--package ${crate_def.name}"; }.${crate.mode}
+      featuresArgs
+    ];
     cargoArtifacts = profile.commonCargoArtifacts;
     pname = "${crate_def.name}" + profile.suffix;
     pnameSuffix = "-ext";
@@ -150,7 +153,10 @@ let
       }.${crate.upx};
     in
     craneLib.buildPackage (commonArgs // packageCommonArgs // {
-      cargoExtraArgs = (if binmode then "--bin ${crate_def.name}" else "--package ${crate_def.name}") + " ${featuresArgs}";
+      cargoExtraArgs = lib.concatStringsSep " " [
+        { bin = "--bin ${crate_def.name}"; package = "--package ${crate_def.name}"; }.${crate.mode}
+        featuresArgs
+      ];
       doCheck = false;
       # add suffix to binaries
       postInstall = lib.optionalString workspace.addSuffixToBinaries ''
