@@ -158,15 +158,12 @@ let
         featuresArgs
       ];
       doCheck = false;
-      # add suffix to binaries
       postInstall = lib.optionalString workspace.addSuffixToBinaries ''
         for file in $out/bin/*; do
           mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
         done
       '' + lib.optionalString doUpx ''
-        for file in $out/bin/*; do
-          ${pkgs.upx}/bin/upx ${upxArgs} "$file"
-        done
+        ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
       '';
     });
 
