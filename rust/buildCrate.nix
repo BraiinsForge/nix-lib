@@ -82,7 +82,7 @@ let
   # The list also contains self directory stupidly as `./`, so the bash
   # script that formats docker-spider output into nix fixes this.
   #######################################################################
-  calculateSrc = pkgs.runCommandLocal "${crate_def.name}-srcpaths" { } ''
+  calculateSrc = pkgs.runCommand "${crate_def.name}-srcpaths" { } ''
     cd ${target_path}
     mkdir $out
     gen_sources () {
