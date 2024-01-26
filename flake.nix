@@ -42,7 +42,8 @@
               crossSystem.config = arch;
               config.allowUnsupportedSystem = true;
             } // extras);
-        };
+
+        } // import ./lib.nix pkgs;
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
         pkgs = import nixpkgs { inherit localSystem; };
