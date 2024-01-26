@@ -36,8 +36,8 @@
             inherit pkgs craneLib docker-spider nix-filter localSystem;
           };
 
-          mkCrossPkgs = { arch, extras ? { } }:
-            import nixpkgs ({
+          mkCrossPkgs = imported_nixpkgs: { arch, extras ? { } }:
+            imported_nixpkgs ({
               inherit localSystem;
               crossSystem.config = arch;
               config.allowUnsupportedSystem = true;
