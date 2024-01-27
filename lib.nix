@@ -4,4 +4,13 @@ pkgs: {
   strftime = ts: fmt:
     builtins.readFile (pkgs.runCommand "strftime" { } ''echo -n $(date -d @"${builtins.toString ts}" +"${fmt}") > $out'');
 
+  # usage: `readYaml ./path/to/file.yml`
+  readYaml = path:
+    let
+      jsonOutputDrv = pkgs.runCommand "yaml2json" { } ''
+        ${pkgs.remarshal}/bin/remarshal -if yaml -i "${path}" -of json -o "$out"
+      '';
+    in
+    builtins.fromJSON (builtins.readFile jsonOutputDrv);
+
 }
