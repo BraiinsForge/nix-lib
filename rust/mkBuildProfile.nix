@@ -131,11 +131,19 @@ let
     fixupPhase = ":";
     doCheck = true;
   });
+
+  # derivation that runs `cargo nextest run` on the entire workspace
+  nextest = craneLib.cargoNextest (commonArgs // workspaceCommonArgs // {
+    version = "0.0.0";
+    cargoNextestExtraArgs = "--hide-progress-bar";
+    fixupPhase = ":";
+    doCheck = true;
+  });
 in
 {
   deps = commonCargoArtifacts;
   inherit shell;
-  inherit build clippy test;
+  inherit build clippy test nextest;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit build_pkgs rustCrossTarget rustProfile mode upx env rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
