@@ -5,10 +5,10 @@ craneLib: [
   })
   (craneLib.registryFromSparse {
     indexUrl = "http://registry.ii.zone:8000/api/v1/crates/";
-    configSha256 = "93d873d35cbea1f4accd8f86a22594451a68129ea58800ca7442d5f184271d44";
+    configSha256 = "8ae51bd02f2645c885a8595e2c0bda4baf2855992b38b57328b444b9132ef1df";
   })
   (craneLib.registryFromSparse {
     indexUrl = "http://registry.ii.zone/api/v1/crates/";
-    configSha256 = "93d873d35cbea1f4accd8f86a22594451a68129ea58800ca7442d5f184271d44";
+    configSha256 = "8ae51bd02f2645c885a8595e2c0bda4baf2855992b38b57328b444b9132ef1df";
   })
 ]
