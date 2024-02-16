@@ -135,7 +135,7 @@ let
   # derivation that runs `cargo nextest run` on the entire workspace
   nextest = craneLib.cargoNextest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoNextestExtraArgs = "--hide-progress-bar";
+    cargoNextestExtraArgs = "--workspace --hide-progress-bar";
     fixupPhase = ":";
     doCheck = true;
   });
