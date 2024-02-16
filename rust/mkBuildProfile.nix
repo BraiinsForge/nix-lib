@@ -144,6 +144,7 @@ in
   deps = commonCargoArtifacts;
   inherit shell;
   inherit build clippy test nextest;
+  cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit build_pkgs rustCrossTarget rustProfile mode upx env rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
