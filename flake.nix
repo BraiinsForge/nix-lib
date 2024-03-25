@@ -6,7 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
 
     crane = {
-      url = "github:ipetkov/crane";
+      url = "github:ipetkov/crane/v0.16.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     docker-spider = {
