@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    nix-filter.url = "github:numtide/nix-filter";
 
     crane = {
       url = "github:ipetkov/crane/v0.16.3";
@@ -14,9 +15,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
       inputs.crane.follows = "crane";
-    };
-    nix-filter = {
-      url = "github:numtide/nix-filter";
     };
   };
 
