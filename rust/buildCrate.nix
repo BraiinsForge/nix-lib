@@ -30,11 +30,12 @@ let
   cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
-      { bin = "--bin crane-dummy-${crate_def.name}"; package = "--package ${crate_def.name}"; }.${crate.mode}
+      # this is not a mistake, `package_name` is actually needed for `--bin`
+      { bin = "--bin crane-dummy-${crate_def.package_name}"; package = "--package ${crate_def.package_name}"; }.${crate.mode}
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
-    pname = "${crate_def.name}" + profile.suffix;
+    pname = "${crate_def.bin_name}" + profile.suffix;
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
@@ -82,7 +83,7 @@ let
   # The list also contains self directory stupidly as `./`, so the bash
   # script that formats docker-spider output into nix fixes this.
   #######################################################################
-  calculateSrc = pkgs.runCommand "${crate_def.name}-srcpaths" { } ''
+  calculateSrc = pkgs.runCommand "${crate_def.bin_name}-srcpaths" { } ''
     cd ${target_path}
     mkdir $out
     gen_sources () {
@@ -122,7 +123,7 @@ let
   # make it more cache sensible.
   ########################################################################
   packageCommonArgs = crate_def.env // crate.env // {
-    pname = crate_def.name + profile.suffix;
+    pname = crate_def.bin_name + profile.suffix;
     doInstallCargoArtifacts = false;
     cargoToml = crate_def.src_path + /Cargo.toml;
     cargoLock = workspace.src + /Cargo.lock;
@@ -154,7 +155,7 @@ let
     in
     craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
-        { bin = "--bin ${crate_def.name}"; package = "--package ${crate_def.name}"; }.${crate.mode}
+        { bin = "--bin ${crate_def.bin_name}"; package = "--package ${crate_def.package_name}"; }.${crate.mode}
         featuresArgs
       ];
       doCheck = false;
