@@ -35,11 +35,14 @@
           };
 
           mkCrossPkgs = imported_nixpkgs: { arch, extras ? { } }:
-            imported_nixpkgs ({
-              inherit localSystem;
-              crossSystem.config = arch;
-              config.allowUnsupportedSystem = true;
-            } // extras);
+            let
+              base = {
+                inherit localSystem;
+                crossSystem.config = arch;
+                config.allowUnsupportedSystem = true;
+              };
+            in
+            imported_nixpkgs (pkgs.lib.recursiveUpdate base extras);
 
         } // import ./lib.nix pkgs;
     } // flake-utils.lib.eachDefaultSystem (localSystem:
