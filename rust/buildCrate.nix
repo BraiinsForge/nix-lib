@@ -1,8 +1,8 @@
 # inherited args
 inputs: workspace: profile:
 # this fn's args
-crate_def: { mode ? profile.mode, upx ? profile.upx, env ? { }, features ? [ ], noDefaultFeatures ? false }:
-let crate = { inherit mode upx env features noDefaultFeatures; }; in
+crate_def: { minimal_deps ? profile.minimal_deps, upx ? profile.upx, env ? { }, features ? [ ], noDefaultFeatures ? false }:
+let crate = { inherit minimal_deps upx env features noDefaultFeatures; }; in
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -31,7 +31,8 @@ let
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
       # this is not a mistake, `package_name` is actually needed for `--bin`
-      { bin = "--bin crane-dummy-${crate_def.package_name}"; package = "--package ${crate_def.package_name}"; }.${crate.mode}
+      "--bin crane-dummy-${crate_def.package_name}"
+      (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
@@ -155,7 +156,8 @@ let
     in
     craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
-        { bin = "--bin ${crate_def.bin_name}"; package = "--package ${crate_def.package_name}"; }.${crate.mode}
+        "--bin ${crate_def.bin_name}"
+        (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
         featuresArgs
       ];
       doCheck = false;

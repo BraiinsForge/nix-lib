@@ -1,7 +1,7 @@
 # inherited args
 inputs: workspace:
 # this fn's args
-{ build_pkgs ? inputs.pkgs, suffix ? null, rustCrossTarget ? null, rustProfile ? "dev", mode ? "bin", upx ? "none", env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ] }:
+{ build_pkgs ? inputs.pkgs, suffix ? null, rustCrossTarget ? null, rustProfile ? "dev", minimal_deps ? false, upx ? "none", env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ] }:
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -146,7 +146,7 @@ in
   inherit build clippy test nextest;
   cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
-    inherit build_pkgs rustCrossTarget rustProfile mode upx env rustFlags nativeDeps targetDeps;
+    inherit build_pkgs rustCrossTarget rustProfile minimal_deps upx env rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
     suffix = profile_suffix;
   };
