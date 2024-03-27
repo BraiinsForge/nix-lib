@@ -138,7 +138,7 @@ let
     };
     preBuild = ''
       mkdir -p target
-      cp -r --no-clobber ${workspace.manifestSearch}/* . || true
+      cp -r --no-clobber ${workspace.manifestSearch}/* . 2>/dev/null || true
     '';
     cargoArtifacts = if !(profile.build_pkgs.stdenv.hostPlatform.isWindows || profile.build_pkgs.stdenv.hostPlatform.isDarwin) then cargoArtifacts else trace "windows and mac suck, not including prebuilt deps in windows builds" null;
     # ↑ capctl makes me sad :( it is not smart enough to not compile in any Linux-only stuff on windows,
