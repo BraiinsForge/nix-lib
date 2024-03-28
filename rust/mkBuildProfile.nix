@@ -52,13 +52,12 @@ let
       args = {
         # packages specified in workspace and profile definitions
         nativeBuildInputs = (workspace.nativeDeps pkgs) ++ (nativeDeps pkgs);
-        buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs);
+        buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs)
+          ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]));
 
         # special packages just for windows/darwin cross-compilation
         # plus libiconv, which is needed on both Mac and Windows
-        depsBuildBuild = with build_pkgs; [ libiconv ]
-          ++ (lib.optionals buildingForWindows [ stdenv.cc windows.pthreads ])
-          ++ (lib.optionals buildingForDarwin [ darwin.apple_sdk.frameworks.Security ]);
+        depsBuildBuild = lib.optionals buildingForWindows (with build_pkgs; [ libiconv stdenv.cc windows.pthreads ]);
 
         CARGO_PROFILE = rustProfile;
 
