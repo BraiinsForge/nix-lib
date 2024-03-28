@@ -1,7 +1,9 @@
-pkgs: {
+pkgs:
+let lib = pkgs.lib; in
+{
 
   # tiny helper function to convert a derivation to a flake app
-  mkApp = drv: { type = "app"; program = pkgs.lib.getExe drv; };
+  mkApp = drv: { type = "app"; program = lib.getExe drv; };
 
   # usage: `out = strftime 1706207938 "%Y-%m-%d_%H-%M-%S";`
   strftime = ts: fmt:
