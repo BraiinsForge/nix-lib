@@ -13,6 +13,7 @@ let
   profile_suffix = if suffix != null then "-${suffix}" else "";
 
   buildingForWindows = build_pkgs.stdenv.hostPlatform.isWindows;
+  buildingForDarwin = build_pkgs.stdenv.hostPlatform.isDarwin;
 
   makeCargoCrossEnvVars = stdenv: target:
     let
@@ -53,9 +54,11 @@ let
         nativeBuildInputs = (workspace.nativeDeps pkgs) ++ (nativeDeps pkgs);
         buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs);
 
-        # special packages just for windows cross-compilation
+        # special packages just for windows/darwin cross-compilation
         # plus libiconv, which is needed on both Mac and Windows
-        depsBuildBuild = with build_pkgs; (lib.optionals buildingForWindows [ stdenv.cc windows.pthreads ]) ++ [ libiconv ];
+        depsBuildBuild = with build_pkgs; [ libiconv ]
+          ++ (lib.optionals buildingForWindows [ stdenv.cc windows.pthreads ])
+          ++ (lib.optionals buildingForDarwin [ darwin.apple_sdk.frameworks.Security ]);
 
         CARGO_PROFILE = rustProfile;
 
