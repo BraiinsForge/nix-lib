@@ -16,4 +16,7 @@ pkgs: {
     in
     builtins.fromJSON (builtins.readFile jsonOutputDrv);
 
+  # map names of attributes in an attribute set
+  mapAttrNames = f: set: lib.mapAttrs' (name: value: { name = f name; inherit value; }) set;
+
 }
