@@ -19,4 +19,7 @@ pkgs: {
   # map names of attributes in an attribute set
   mapAttrNames = f: set: lib.mapAttrs' (name: value: { name = f name; inherit value; }) set;
 
+  # map values of attributes in an attribute set
+  mapAttrValues = f: set: lib.mapAttrs' (name: value: { inherit name; value = f value; }) set;
+
 }
