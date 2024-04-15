@@ -112,7 +112,7 @@ let
   # derivation that runs `cargo build` on the entire workspace
   build = craneLib.cargoBuild (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = "--workspace";
+    cargoExtraArgs = "--workspace --keep-going";
     fixupPhase = ":";
     doCheck = false;
   });
@@ -120,7 +120,7 @@ let
   # derivation that runs `cargo clippy` on the entire workspace
   clippy = craneLib.cargoClippy (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = "--workspace";
+    cargoExtraArgs = "--workspace --keep-going";
     cargoClippyExtraArgs = "--all-targets -- -D warnings";
     fixupPhase = ":";
     doCheck = false;
@@ -137,7 +137,8 @@ let
   # derivation that runs `cargo nextest run` on the entire workspace
   nextest = craneLib.cargoNextest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoNextestExtraArgs = "--workspace --hide-progress-bar";
+    cargoExtraArgs = "--workspace";
+    cargoNextestExtraArgs = "--hide-progress-bar";
     fixupPhase = ":";
     doCheck = true;
   });
