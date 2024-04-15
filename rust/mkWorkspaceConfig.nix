@@ -1,7 +1,7 @@
 # inherited args
 inputs:
 # this fn's args
-{ src, env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ], addSuffixToBinaries ? false }:
+{ src, env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ], addSuffixToBinaries ? false, enableRustFlagsHack ? false }:
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -80,7 +80,7 @@ let
 in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries;
+    inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack;
     inherit manifests_src manifestSearch;
   };
 }

@@ -72,7 +72,7 @@ let
       cargoCrossEnvVars = lib.optionalAttrs (rustCrossTarget != null) (makeCargoCrossEnvVars build_pkgs.stdenv rustCrossTarget);
       rustFlagsHack = mkRustFlagsHack (rustflags ++ dummy_src_rustflags);
     in
-    args // cargoCrossEnvVars // rustFlagsHack // workspace.env // env;
+    args // cargoCrossEnvVars // (if workspace.enableRustFlagsHack then rustFlagsHack else { }) // workspace.env // env;
 
   ####################################################################
   # build all dependencies of all packages in the virtual workspace
