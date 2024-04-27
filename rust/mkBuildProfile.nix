@@ -102,7 +102,7 @@ let
     doCheck = false;
   });
 
-  shell = pkgs.mkShell (commonArgs // {
+  shell = pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
     name = "build-env" + profile_suffix;
     packages = [ craneLib.cargo ];
     shellHook = if rustCrossTarget == null then "" else ''
