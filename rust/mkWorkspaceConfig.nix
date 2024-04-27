@@ -1,7 +1,15 @@
 # inherited args
 inputs:
 # this fn's args
-{ src, env ? { }, rustFlags ? [ ], nativeDeps ? _: [ ], targetDeps ? _: [ ], addSuffixToBinaries ? false, enableRustFlagsHack ? false, disableKeepGoing ? false }:
+{ src
+, env ? { }
+, rustFlags ? [ ]
+, nativeDeps ? _: [ ]
+, targetDeps ? _: [ ]
+, addSuffixToBinaries ? false
+, enableRustFlagsHack ? false
+, disableKeepGoing ? false
+}:
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;

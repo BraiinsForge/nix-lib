@@ -1,7 +1,12 @@
 # inherited args
 inputs: workspace: profile:
 # this fn's args
-crate_def: { minimal_deps ? profile.minimal_deps, upx ? profile.upx, env ? { }, features ? [ ], noDefaultFeatures ? false }:
+crate_def: { minimal_deps ? profile.minimal_deps
+           , upx ? profile.upx
+           , env ? { }
+           , features ? [ ]
+           , noDefaultFeatures ? false
+           }:
 let crate = { inherit minimal_deps upx env features noDefaultFeatures; }; in
 let
   pkgs = inputs.pkgs;
