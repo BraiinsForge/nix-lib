@@ -109,7 +109,7 @@ let
     , shellHook ? ""
     }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       name = name + profile_suffix;
-      packages = [ craneLib.cargo ] ++ packages;
+      packages = [ craneLib.cargo build_pkgs.stdenv.cc ] ++ packages;
       inherit inputsFrom;
       shellHook = lib.optionalString (rustCrossTarget != null) ''
         echo "Entering cross compilation environment for '${rustCrossTarget}'..."
