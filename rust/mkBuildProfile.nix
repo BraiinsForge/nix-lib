@@ -102,13 +102,21 @@ let
     doCheck = false;
   });
 
-  shell = pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
-    name = "build-env" + profile_suffix;
-    packages = [ craneLib.cargo ];
-    shellHook = if rustCrossTarget == null then "" else ''
-      echo "Entering cross compilation environment for '${rustCrossTarget}'..."
-    '';
-  });
+  mkShell =
+    { name ? "build-env"
+    , packages ? [ ]
+    , inputsFrom ? [ ]
+    , shellHook ? ""
+    }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
+      name = name + profile_suffix;
+      packages = [ craneLib.cargo ] ++ packages;
+      inherit inputsFrom;
+      shellHook = lib.optionalString (rustCrossTarget != null) ''
+        echo "Entering cross compilation environment for '${rustCrossTarget}'..."
+      '' + shellHook;
+    });
+
+  shell = mkShell { };
 
   workspaceCommonArgs = {
     # # TODO: clean source, but include assets
@@ -155,7 +163,7 @@ let
 in
 {
   deps = commonCargoArtifacts;
-  inherit shell;
+  inherit mkShell shell;
   inherit build clippy test nextest;
   cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
