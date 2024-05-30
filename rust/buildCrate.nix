@@ -128,7 +128,7 @@ let
   # only limit to what a particular crate needs to build, which should
   # make it more cache sensible.
   ########################################################################
-  packageCommonArgs = crate_def.env // crate.env // {
+  packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
     pname = crate_def.bin_name + profile.suffix;
     doInstallCargoArtifacts = false;
     cargoToml = crate_def.src_path + /Cargo.toml;

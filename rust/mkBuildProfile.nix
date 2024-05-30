@@ -8,6 +8,7 @@ inputs: workspace:
 , minimal_deps ? false
 , upx ? "none"
 , env ? { }
+, crateEnv ? { }
 , rustFlags ? [ ]
 , nativeDeps ? _: [ ]
 , targetDeps ? _: [ ]
@@ -135,7 +136,7 @@ let
     pname = "workspace" + profile_suffix;
     cargoArtifacts = commonCargoArtifacts;
     doInstallCargoArtifacts = false;
-  };
+  } // crateEnv;
 
   # derivation that runs `cargo build` on the entire workspace
   build = craneLib.cargoBuild (commonArgs // workspaceCommonArgs // {
@@ -176,7 +177,7 @@ in
   inherit build clippy test nextest;
   cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
-    inherit build_pkgs rustCrossTarget rustProfile minimal_deps upx env rustFlags nativeDeps targetDeps;
+    inherit build_pkgs rustCrossTarget rustProfile minimal_deps upx env crateEnv rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
     suffix = profile_suffix;
   };
