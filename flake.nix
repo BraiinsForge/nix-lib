@@ -7,14 +7,15 @@
     nix-filter.url = "github:numtide/nix-filter";
 
     crane = {
-      url = "github:ipetkov/crane/v0.16.3";
+      url = "github:ipetkov/crane/v0.17.2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.crane.follows = "crane";
+      # docker-spider flake uses something that's deprecated in newer crane
+      inputs.crane.url = "github:ipetkov/crane/v0.16.3";
     };
   };
 
