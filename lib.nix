@@ -24,4 +24,12 @@ let lib = pkgs.lib; in
   # map values of attributes in an attribute set
   mapAttrValues = f: set: lib.mapAttrs' (name: value: { inherit name; value = f value; }) set;
 
+  # write a shell application with a clean env
+  writeCleanEnvShellApp = name: deps: text: pkgs.writeShellApplication {
+    inherit name text;
+    runtimeInputs = deps;
+    runtimeEnv.PATH = null;
+    excludeShellChecks = [ "SC2123" ];
+  };
+
 }
