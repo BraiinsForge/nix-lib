@@ -7,7 +7,7 @@
     nix-filter.url = "github:numtide/nix-filter";
 
     crane = {
-      url = "github:ipetkov/crane/v0.17.2";
+      url = "github:ipetkov/crane/v0.17.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     docker-spider = {
