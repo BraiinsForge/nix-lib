@@ -22,7 +22,7 @@ let
     include = [
       (nix-filter.lib.and
         nix-filter.lib.isDirectory
-        (_: p: _: ((match ".*(src|assets|proto/).*" (toString p)) == null))
+        (_: p: _: ((match ".*/(src|assets|proto)/.*" (toString p)) == null))
       )
       (nix-filter.lib.matchExt "toml")
       (src + /Cargo.toml)
