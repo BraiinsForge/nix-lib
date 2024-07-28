@@ -91,4 +91,9 @@ in
     inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing;
     inherit manifests_src manifestSearch;
   };
+
+  # not used normally but can be used for debugging purposes
+  internal = {
+    inherit manifests_src manifestSearch;
+  };
 }
