@@ -18,6 +18,15 @@ let lib = pkgs.lib; in
     in
     builtins.fromJSON (builtins.readFile jsonOutputDrv);
 
+  # usage: `readJson5 ./path/to/file.json5`
+  readJson5 = path:
+    let
+      jsonOutputDrv = pkgs.runCommand "json52json" { } ''
+        ${pkgs.python3Packages.json5}/bin/pyjson5 --as-json "${path}" > "$out"
+      '';
+    in
+    builtins.fromJSON (builtins.readFile jsonOutputDrv);
+
   # map names of attributes in an attribute set
   mapAttrNames = f: set: lib.mapAttrs' (name: value: { name = f name; inherit value; }) set;
 
