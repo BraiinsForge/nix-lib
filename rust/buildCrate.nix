@@ -49,21 +49,11 @@ let
     doCheck = false;
   });
 
-  ##########################################################################
-  # We are dissecting an in-repo path from a nix store path for the package
-  # so that we know in which folder to run docker-spider to get paths for
-  # this particular crate
-  ##########################################################################
-  target_path =
-    let
-      stringified = toString crate_def.src_path; # path -> string
-      splittified = builtins.split "/" stringified; # split into path segments
-      droppified = lib.drop 8 splittified; # drop the /nix/store/.... prefix
-      filtered = filter (x: (typeOf x) == "string") droppified; # remove sub-lists representing holes left after delimiters
-      concatted = lib.concatStringsSep "/" filtered; # rejoin into a stringly path
-    in
-    # produce local path within cargo manifest derivation
-    toString "${workspace.manifestSearch}/${concatted}";
+  # crate path relative to the workspace root
+  relativeCratePath = lib.path.removePrefix workspace.src crate_def.src_path;
+
+  # crate path within cargo manifest derivation
+  manifestCratePath = "${workspace.manifestSearch}/${relativeCratePath}";
 
   #######################################################################
   # docker-spider is not dead, it's now a nix util :D
@@ -90,7 +80,7 @@ let
   # script that formats docker-spider output into nix fixes this.
   #######################################################################
   calculateSrc = pkgs.runCommand "${crate_def.bin_name}-srcpaths" { } ''
-    cd ${target_path}
+    cd ${manifestCratePath}
     mkdir $out
     gen_sources () {
         set -x
