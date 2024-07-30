@@ -100,7 +100,7 @@ let
     }
     gen_sources ./Cargo.toml
   '';
-  final_src = (import "${calculateSrc}/paths.nix");
+  final_src = import "${calculateSrc}/paths.nix";
 
   #######################################################################
   # this is essentially the old bos-main CI mechanism, but better, and
@@ -140,16 +140,20 @@ let
     # and so we cannot compile all deps
   };
 
-  package =
-    let
-      doUpx = crate.upx != "none";
-      upxArgs = {
-        none = "";
-        default = "";
-        lzma = "--lzma";
-      }.${crate.upx};
-    in
-    craneLib.buildPackage (commonArgs // packageCommonArgs // {
+
+  doUpx = crate.upx != "none";
+  upxArgs = {
+    none = "";
+    default = "";
+    lzma = "--lzma";
+  }.${crate.upx};
+
+
+  wasmBindgenCliExtension = if workspace.wasm-bindgen-cli != null then { wasm-bindgen-cli = workspace.wasm-bindgen-cli; } else { };
+
+
+  package = {
+    bin = craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
         "--bin ${crate_def.bin_name}"
         (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
@@ -164,6 +168,77 @@ let
         ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
       '';
     });
+    trunk = craneLib.buildTrunkPackage (commonArgs // packageCommonArgs // wasmBindgenCliExtension // {
+      cargoArtifacts = null;
+
+      # we're overriding filtered src from `packageCommonArgs`, because `trunk` calls `cargo metadata`, and it breaks because of the incomplete workspace...
+      src = workspace.src;
+
+      preBuild = ''
+        # trunk can't find `index.html` unless we're in the crate directory
+        cd ${relativeCratePath}
+      '';
+      cargoExtraArgs = lib.concatStringsSep " " [
+        "--bin ${crate_def.bin_name}"
+        (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
+        featuresArgs
+      ];
+      doCheck = false;
+    });
+    # parts of this are copied from https://github.com/ipetkov/crane/pull/358/files#diff-927c8ebbb8df8910593fa69522426d29fea7e7009950b66594278fd9e9aa5e92
+    tauri = craneLib.mkCargoDerivation (commonArgs // packageCommonArgs // {
+      cargoArtifacts = null;
+
+      nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
+        craneLib.installFromCargoBuildLogHook
+        pkgs.cargo-tauri
+        pkgs.jq
+        pkgs.fd
+      ];
+
+      buildPhaseCargoCommand = ''
+        cargoBuildLog=$(realpath $(mktemp cargoBuildLogXXXX.json))
+
+        # tauri fails to find the built binary without this
+        local targetArg
+        if [[ -n "$CARGO_BUILD_TARGET" ]]; then
+          targetArg="--target $CARGO_BUILD_TARGET"
+        fi
+
+        # cd-ing into the crate directory because `cargo tauri build` does not support `-p`
+        pushd ${relativeCratePath}
+
+        # extra config is merged with `tauri.conf.json` in the source tree
+        cargo tauri build $targetArg --ci --config ${pkgs.writeText "tauri.conf.json" (builtins.toJSON crate_def.extraTauriConf)} -- --message-format json-render-diagnostics >"$cargoBuildLog"
+
+        popd
+      '';
+      installPhaseCommand = ''
+        if [ -n "$cargoBuildLog" -a -f "$cargoBuildLog" ]; then
+          installFromCargoBuildLog "$out" "$cargoBuildLog"
+        else
+          echo ${lib.strings.escapeShellArg ''
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            $cargoBuildLog is either undefined or does not point to a valid file location!
+            By default `buildPackage` will capture cargo's output and use it to determine which binaries
+            should be installed (instead of just guessing based on what is present in cargo's target directory).
+            If you are overriding the derivation with a custom build step, you have two options:
+            1. override `installPhaseCommand` with the appropriate installation steps
+            2. ensure that cargo's build log is captured in a file and point $cargoBuildLog at it
+            At a minimum, the latter option can be achieved with running:
+                cargoBuildLog=$(mktemp cargoBuildLogXXXX.json)
+                cargo build --release --message-format json-render-diagnostics >"$cargoBuildLog"
+          ''}
+
+          false
+        fi
+      '' + ''
+        mkdir -p $out
+        fd '.*' target/ --extension deb --exec cp {} -t $out
+      '';
+      doCheck = false;
+    });
+  };
 
 in
-package
+package.${crate_def.type}

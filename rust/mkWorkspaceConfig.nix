@@ -9,6 +9,7 @@ inputs:
 , addSuffixToBinaries ? false
 , enableRustFlagsHack ? false
 , disableKeepGoing ? false
+, wasm-bindgen-cli ? null
 }:
 let
   pkgs = inputs.pkgs;
@@ -88,7 +89,7 @@ let
 in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing;
+    inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifests_src manifestSearch;
   };
 
