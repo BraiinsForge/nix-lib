@@ -5,11 +5,15 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
-
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     crane = {
       url = "github:ipetkov/crane/v0.17.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,7 +23,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, crane, docker-spider, nix-filter, ... }:
+  outputs = { self, nixpkgs, flake-utils, treefmt-nix, crane, docker-spider, nix-filter, ... }:
     {
       mkLib = pkgs:
         let
@@ -44,6 +48,8 @@
               };
             in
             imported_nixpkgs (pkgs.lib.recursiveUpdate base extras);
+
+          mkFormatter = import ./formatter.nix { inherit pkgs treefmt-nix; };
 
         } // import ./lib.nix pkgs;
     } // flake-utils.lib.eachDefaultSystem (localSystem:

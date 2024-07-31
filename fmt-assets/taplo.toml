@@ -1,0 +1,21 @@
+[formatting]
+align_comments = false
+array_auto_expand = false
+array_auto_collapse = false
+column_width = 120
+indent_string = "    "
+
+
+[[rule]]
+include = ["**/Cargo.toml"]
+keys = [
+    "*dependencies",
+    "target.*.*dependencies",
+    "workspace.*dependencies",
+    "workspace.lints.*",
+    "workspace.members",
+]
+
+[rule.formatting]
+reorder_keys = true
+reorder_arrays = true
