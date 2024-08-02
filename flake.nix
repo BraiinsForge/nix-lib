@@ -10,7 +10,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     crane = {
-      url = "github:ipetkov/crane/v0.17.3";
+      url = "github:ipetkov/crane/v0.18.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -18,8 +18,7 @@
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
-      # docker-spider flake uses something that's deprecated in newer crane
-      inputs.crane.url = "github:ipetkov/crane/v0.16.3";
+      inputs.crane.follows = "crane";
     };
   };
 
