@@ -32,4 +32,58 @@ let lib = pkgs.lib; in
     excludeShellChecks = [ "SC2123" ];
   };
 
+  # wrapper around `pkgs.dockerTools.buildImage`
+  mkDockerImage = { name, tag, crate, arch ? null, binaryName ? "", extraBuildParams ? { } }:
+    let
+      baseArgs = {
+        inherit name tag;
+
+        created = "now";
+        copyToRoot = with pkgs; [ crate bash coreutils-full ];
+
+        config = {
+          Cmd = [ "${crate}/bin/${if binaryName == "" then name else binaryName}" ];
+        };
+
+        architecture = arch;
+      };
+      args = lib.recursiveUpdate baseArgs extraBuildParams;
+    in
+    pkgs.dockerTools.buildImage args;
+
+  # build a docker manifest out of individual images
+  mkDockerManifest = { images }:
+    let
+      docker = "${pkgs.docker}/bin/docker";
+
+      imageTag = image: "$TAG-${image.arch}-${image.os}";
+      loadAndPush = images: builtins.concatStringsSep "\n" (map
+        (image: ''
+          IMAGE=$(${docker} load -i ${image.image} | tail -n1 | cut -d' ' -f3)
+          ${docker} tag "$IMAGE" "${imageTag image}"
+          ${docker} push "${imageTag image}"
+        '')
+        images);
+      ammendImages = images: builtins.concatStringsSep " " (map
+        (image: ''--amend "${imageTag image}"'')
+        images);
+    in
+    pkgs.writeShellScriptBin "docker-manifest" ''
+      set -e
+
+      TAG=$1
+      [[ -z "$TAG" ]] && echo "Manifest image tag not provided" >&2 && exit 1
+
+      set -x # echo on
+
+      set +e
+      ${docker} manifest rm "$TAG"
+      set -e
+
+      ${loadAndPush images}
+
+      ${docker} manifest create "$TAG" ${ammendImages images}
+      ${docker} manifest push --purge "$TAG"
+    '';
+
 }
