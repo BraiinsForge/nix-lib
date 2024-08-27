@@ -31,3 +31,4 @@ free updates and support.
 - https://gitlab.ii.zone/bos/templates/nix-rust-template
 - https://gitlab.ii.zone/bos/crafwler
 - https://gitlab.ii.zone/bos/ci-tools
+- https://gitlab.ii.zone/tooling/power-price-poller
