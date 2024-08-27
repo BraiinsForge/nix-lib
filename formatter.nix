@@ -3,6 +3,7 @@
 { nix ? false
 , rust ? false
 , python ? false
+, shell ? false
 , protobuf ? false
 , toml ? false
 , yaml ? false
@@ -11,7 +12,7 @@
 }:
 let
   args = {
-    inherit nix rust python protobuf toml yaml copyright;
+    inherit nix rust python shell protobuf toml yaml copyright;
     config = ({ rustfmtPackage ? pkgs.rustfmt, withOpenDir ? false, exclude ? [ ] }: { inherit rustfmtPackage withOpenDir exclude; }) config;
   };
 
@@ -58,6 +59,14 @@ treefmt-nix.lib.mkWrapper pkgs {
     (mkIf args.python {
       programs.ruff.format = true;
       settings.formatter.ruff-format.options = [ "--no-cache" "--config" "${./fmt-assets/ruff.toml}" ];
+    })
+
+    (mkIf args.shell {
+      programs.shfmt = {
+        enable = true;
+        indent_size = 4;
+      };
+      settings.formatter.shfmt.options = [ "--binary-next-line" ];
     })
 
     (mkIf args.protobuf {
