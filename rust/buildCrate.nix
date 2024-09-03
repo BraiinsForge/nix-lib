@@ -35,13 +35,13 @@ let
   cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
-      # this is not a mistake, `package_name` is actually needed for `--bin`
-      "--bin crane-dummy-${crate_def.package_name}"
-      (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
+      # this is not a mistake, `packageName` is actually needed for `--bin`
+      "--bin crane-dummy-${crate_def.packageName}"
+      (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
-    pname = "${crate_def.bin_name}" + profile.suffix;
+    pname = "${crate_def.binName}" + profile.suffix;
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
@@ -50,7 +50,7 @@ let
   });
 
   # crate path relative to the workspace root
-  relativeCratePath = lib.path.removePrefix workspace.src crate_def.src_path;
+  relativeCratePath = lib.path.removePrefix workspace.src crate_def.path;
 
   # crate path within cargo manifest derivation
   manifestCratePath = "${workspace.manifestSearch}/${relativeCratePath}";
@@ -79,7 +79,7 @@ let
   # The list also contains self directory stupidly as `./`, so the bash
   # script that formats docker-spider output into nix fixes this.
   #######################################################################
-  calculateSrc = pkgs.runCommand "${crate_def.bin_name}-srcpaths" { } ''
+  calculateSrc = pkgs.runCommand "${crate_def.binName}-srcpaths" { } ''
     cd ${manifestCratePath}
     mkdir $out
     gen_sources () {
@@ -119,9 +119,9 @@ let
   # make it more cache sensible.
   ########################################################################
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
-    pname = crate_def.bin_name + profile.suffix;
+    pname = crate_def.binName + profile.suffix;
     doInstallCargoArtifacts = false;
-    cargoToml = crate_def.src_path + /Cargo.toml;
+    cargoToml = crate_def.path + /Cargo.toml;
     cargoLock = workspace.src + /Cargo.lock;
     src = nix-filter.lib.filter {
       root = workspace.src;
@@ -155,8 +155,8 @@ let
   package = {
     bin = craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
-        "--bin ${crate_def.bin_name}"
-        (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
+        "--bin ${crate_def.binName}"
+        (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
@@ -179,8 +179,8 @@ let
         cd ${relativeCratePath}
       '';
       cargoExtraArgs = lib.concatStringsSep " " [
-        "--bin ${crate_def.bin_name}"
-        (if crate.minimal_deps then "--package ${crate_def.package_name}" else "")
+        "--bin ${crate_def.binName}"
+        (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
