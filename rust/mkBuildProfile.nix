@@ -175,6 +175,7 @@ in
   deps = commonCargoArtifacts;
   inherit mkShell shell;
   inherit build clippy test nextest;
+  inherit rustCrossTarget;
   cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit build_pkgs rustCrossTarget rustProfile minimal_deps upx env crateEnv rustFlags nativeDeps targetDeps;
