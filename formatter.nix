@@ -22,7 +22,7 @@ with pkgs.lib.modules;
 treefmt-nix.lib.mkWrapper pkgs {
   config = mkMerge [
     {
-      projectRootFile = ".git/config";
+      projectRootFile = "flake.nix";
       package =
         let
           treefmt = pkgs.treefmt2;
