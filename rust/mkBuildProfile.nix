@@ -6,6 +6,7 @@ inputs: workspace:
 , rustCrossTarget ? null
 , rustProfile ? "dev"
 , minimal_deps ? false
+, denix ? false
 , upx ? "none"
 , env ? { }
 , crateEnv ? { }
@@ -178,7 +179,7 @@ in
   inherit rustCrossTarget;
   cc = build_pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
-    inherit build_pkgs rustCrossTarget rustProfile minimal_deps upx env crateEnv rustFlags nativeDeps targetDeps;
+    inherit build_pkgs rustCrossTarget rustProfile minimal_deps denix upx env crateEnv rustFlags nativeDeps targetDeps;
     inherit commonArgs commonCargoArtifacts;
     suffix = profile_suffix;
   };

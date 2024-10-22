@@ -2,12 +2,13 @@
 inputs: workspace: profile:
 # this fn's args
 crate_def: { minimal_deps ? profile.minimal_deps
+           , denix ? profile.denix
            , upx ? profile.upx
            , env ? { }
            , features ? [ ]
            , noDefaultFeatures ? false
            }:
-let crate = { inherit minimal_deps upx env features noDefaultFeatures; }; in
+let crate = { inherit minimal_deps denix upx env features noDefaultFeatures; }; in
 let
   pkgs = inputs.pkgs;
   lib = inputs.pkgs.lib;
@@ -163,6 +164,11 @@ let
       postInstall = lib.optionalString workspace.addSuffixToBinaries ''
         for file in $out/bin/*; do
           mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
+        done
+      '' + lib.optionalString crate.denix ''
+        for file in $out/bin/*; do
+          echo "denixing '$file'"
+          patchelf --remove-rpath --set-interpreter /lib64/ld-linux-x86-64.so.2 "$file"
         done
       '' + lib.optionalString doUpx ''
         ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
