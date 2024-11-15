@@ -167,7 +167,7 @@ let
         done
       '' + lib.optionalString crate.denix ''
         for file in $out/bin/*; do
-          echo "denixing '$file'"
+          echo "denixing $file"
           patchelf --remove-rpath --set-interpreter /lib64/ld-linux-x86-64.so.2 "$file"
         done
       '' + lib.optionalString doUpx ''
