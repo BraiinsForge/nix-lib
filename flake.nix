@@ -50,8 +50,13 @@
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
         pkgs = import nixpkgs { inherit localSystem; };
+        ii = self.mkLib pkgs;
       in
       {
-        formatter = pkgs.nixpkgs-fmt;
+        formatter = ii.mkFormatter {
+          nix = true;
+          toml = true;
+          yaml = true;
+        };
       });
 }
