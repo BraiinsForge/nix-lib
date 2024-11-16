@@ -13,9 +13,18 @@ keys = [
     "target.*.*dependencies",
     "workspace.*dependencies",
     "workspace.lints.*",
-    "workspace.members",
 ]
-
 [rule.formatting]
 reorder_keys = true
+reorder_arrays = true
+
+
+# NOTE: `reorder_arrays` doesn't work for arrays directly, it only works if applied to a table that contains array
+# values. We want to sort `workspace.members` so we have to have this extra rule as a workaround.
+[[rule]]
+include = ["**/Cargo.toml"]
+keys = [
+    "workspace",
+]
+[rule.formatting]
 reorder_arrays = true
