@@ -26,7 +26,7 @@
           "flake-utils"
         ],
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-do-not-override"
         ]
       },
       "locked": {
@@ -98,7 +98,7 @@
         "type": "github"
       }
     },
-    "nixpkgs": {
+    "nixpkgs-do-not-override": {
       "locked": {
         "lastModified": 1722415718,
         "narHash": "sha256-5US0/pgxbMksF92k1+eOa8arJTJiPvsdZj9Dl+vJkM4=",
@@ -120,7 +120,7 @@
         "docker-spider": "docker-spider",
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs-do-not-override": "nixpkgs-do-not-override",
         "treefmt-nix": "treefmt-nix"
       }
     },
@@ -159,7 +159,7 @@
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-do-not-override"
         ]
       },
       "locked": {

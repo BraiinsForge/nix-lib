@@ -2,23 +2,26 @@
   description = "NixLib";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # This is NOT supposed to be overriden in downstream flakes because we want to ensure that all downstream projects
+    # are using the same versions of formatters.
+    nixpkgs-do-not-override.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
     crane.url = "github:ipetkov/crane/v0.19.1";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-do-not-override";
     };
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-do-not-override";
       inputs.flake-utils.follows = "flake-utils";
       inputs.crane.follows = "crane";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, treefmt-nix, crane, docker-spider, nix-filter, ... }:
+  outputs = { self, nixpkgs-do-not-override, flake-utils, treefmt-nix, crane, docker-spider, nix-filter, ... }:
     {
       mkLib = pkgs:
         let
@@ -44,16 +47,14 @@
             in
             imported_nixpkgs (pkgs.lib.recursiveUpdate base extras);
 
-          mkFormatter = import ./formatter.nix { inherit pkgs treefmt-nix; };
-
         } // import ./lib.nix pkgs;
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
-        pkgs = import nixpkgs { inherit localSystem; };
-        ii = self.mkLib pkgs;
+        pkgs = import nixpkgs-do-not-override { inherit localSystem; };
       in
       {
-        formatter = ii.mkFormatter {
+        mkFormatter = import ./formatter.nix { inherit pkgs treefmt-nix; };
+        formatter = self.mkFormatter.${localSystem} {
           nix = true;
           toml = true;
           yaml = true;
