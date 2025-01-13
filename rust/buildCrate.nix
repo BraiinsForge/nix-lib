@@ -168,7 +168,15 @@ let
       '' + lib.optionalString crate.denix ''
         for file in $out/bin/*; do
           echo "denixing $file"
-          patchelf --remove-rpath --set-interpreter /lib64/ld-linux-x86-64.so.2 "$file"
+          interpreter=$(patchelf --print-interpreter "$file" | sed -r 's#^/nix/store/[^/]*(/.*)$#\1#;t;d')
+
+          # rewrite lib to lib64 for x86_64 builds
+          if [ "$interpreter" == "/lib/ld-linux-x86-64.so.2" ]; then
+            interpreter="/lib64/ld-linux-x86-64.so.2"
+          fi
+
+          echo "setting interpreter to '$interpreter'"
+          patchelf --remove-rpath --set-interpreter "$interpreter" "$file"
         done
       '' + lib.optionalString doUpx ''
         ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
