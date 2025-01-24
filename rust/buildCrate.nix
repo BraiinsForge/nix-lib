@@ -161,6 +161,8 @@ let
         featuresArgs
       ];
       doCheck = false;
+      # strip is controlled directly by cargo profile
+      dontStrip = true;
       postInstall = lib.optionalString workspace.addSuffixToBinaries ''
         for file in $out/bin/*; do
           mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
