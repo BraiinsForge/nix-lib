@@ -51,7 +51,7 @@ let lib = pkgs.lib; in
         copyToRoot = with pkgs; [ crate bash coreutils-full ];
 
         config = {
-          Cmd = [ "${crate}/bin/${if binaryName == "" then name else binaryName}" ];
+          Entrypoint = [ "${crate}/bin/${if binaryName == "" then name else binaryName}" ];
         };
 
         architecture = arch;
