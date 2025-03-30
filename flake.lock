@@ -100,11 +100,11 @@
     },
     "nixpkgs-do-not-override": {
       "locked": {
-        "lastModified": 1731069548,
-        "narHash": "sha256-Pwvvn8ECxlOIEG488f6tYKC8NA16NUJVCK3T64aTFp8=",
+        "lastModified": 1743259260,
+        "narHash": "sha256-ArWLUgRm1tKHiqlhnymyVqi5kLNCK5ghvm06mfCl4QY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "14353fcbd673ef1045ad9517a061d69c30938263",
+        "rev": "eb0e0f21f15c559d2ac7633dc81d079d1caf5f5f",
         "type": "github"
       },
       "original": {
@@ -120,8 +120,7 @@
         "docker-spider": "docker-spider",
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
-        "nixpkgs-do-not-override": "nixpkgs-do-not-override",
-        "treefmt-nix": "treefmt-nix"
+        "nixpkgs-do-not-override": "nixpkgs-do-not-override"
       }
     },
     "rust-analyzer-src": {
@@ -153,26 +152,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "treefmt-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-do-not-override"
-        ]
-      },
-      "locked": {
-        "lastModified": 1730321837,
-        "narHash": "sha256-vK+a09qq19QNu2MlLcvN4qcRctJbqWkX7ahgPZ/+maI=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "746901bb8dba96d154b66492a29f5db0693dbfcc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
         "type": "github"
       }
     }

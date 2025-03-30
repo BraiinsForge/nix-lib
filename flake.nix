@@ -9,10 +9,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
     crane.url = "github:ipetkov/crane/v0.19.1";
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs-do-not-override";
-    };
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs-do-not-override";
@@ -21,7 +17,7 @@
     };
   };
 
-  outputs = { self, nixpkgs-do-not-override, flake-utils, treefmt-nix, crane, docker-spider, nix-filter, ... }:
+  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, docker-spider, nix-filter, ... }:
     {
       mkLib = pkgs:
         let
@@ -53,8 +49,8 @@
         pkgs = import nixpkgs-do-not-override { inherit localSystem; };
       in
       {
-        mkFormatter = import ./formatter.nix { inherit pkgs treefmt-nix; };
-        formatter = self.mkFormatter.${localSystem} {
+        braiinsfmt = import ./formatter.nix pkgs;
+        formatter = self.braiinsfmt.${localSystem} {
           nix = true;
           toml = true;
           yaml = true;
