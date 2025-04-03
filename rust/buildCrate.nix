@@ -88,7 +88,7 @@ let
         curr_dir="$(pwd)"
         crate_dir="$(dirname $1)/"
         echo "{ me = \"$crate_dir\"; srcs = [" >> $out/paths.tmp
-        ${docker-spider.outputs.packages.${localSystem}.default}/bin/docker-spider p --list $1 2>/dev/null | awk -- '{print "\"" $0 "\"";}' >> $out/paths.tmp
+        ${docker-spider.outputs.packages.${localSystem}.default}/bin/docker-spider p --list $1 | awk -- '{print "\"" $0 "\"";}' >> $out/paths.tmp
         echo "\"$crate_dir\"" >> $out/paths.tmp
         echo "]; }" >> $out/paths.tmp
         to_replace="$(echo $(pwd) | grep -Eo '/nix/store/[A-Za-z0-9_-]+/')"

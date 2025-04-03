@@ -30,11 +30,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1722588770,
-        "narHash": "sha256-gGAhyqXTUkl//zrsSTPpCo2S3kXpWu0UQ4Hd9amq8D8=",
+        "lastModified": 1743696137,
+        "narHash": "sha256-hS5JEBusyiYgRVohEoB61DgW0VVAFt6HkZqeddaGk3I=",
         "ref": "refs/heads/master",
-        "rev": "f2881076732c98d2808a869c5782f373708ea8c4",
-        "revCount": 8,
+        "rev": "061cc0652c548e3792b9e360788a44a137605c61",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@gitlab.ii.zone/bos/docker-spider"
       },
