@@ -19,6 +19,15 @@
 
   outputs = { self, nixpkgs-do-not-override, flake-utils, crane, docker-spider, nix-filter, ... }:
     {
+      mkOverlay = { loadRustToolchain }:
+        final: prev: rec {
+          ii.lib = self.mkLib final;
+          ii.rustToolchain = loadRustToolchain final;
+          ii.rust = ii.lib.mkRustLib {
+            craneLib = ii.lib.craneLib.overrideToolchain loadRustToolchain;
+          };
+        };
+
       mkLib = pkgs:
         let
           localSystem = pkgs.stdenv.buildPlatform.system;
