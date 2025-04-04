@@ -49,11 +49,8 @@ let
     doCheck = false;
   });
 
-  # crate path relative to the workspace root
-  relativeCratePath = lib.path.removePrefix workspace.src crate_def.path;
-
   # crate path within cargo manifest derivation
-  manifestCratePath = "${workspace.manifestSearch}/${relativeCratePath}";
+  manifestCratePath = "${workspace.manifestSearch}/${crate_def.relativePath}";
 
   #######################################################################
   # docker-spider is not dead, it's now a nix util :D
@@ -120,14 +117,14 @@ let
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
     pname = crate_def.binName + profile.suffix;
     doInstallCargoArtifacts = false;
-    cargoToml = crate_def.path + /Cargo.toml;
-    cargoLock = workspace.src + /Cargo.lock;
+    cargoToml = "${workspace.src}/${crate_def.relativePath}/Cargo.toml";
+    cargoLock = "${workspace.src}/Cargo.lock";
     src = nix-filter.lib.filter {
       root = workspace.src;
       include = final_src.srcs ++ [
-        (workspace.src + /.cargo)
-        (workspace.src + /Cargo.toml)
-        (workspace.src + /Cargo.lock)
+        "${workspace.src}/.cargo"
+        "${workspace.src}/Cargo.toml"
+        "${workspace.src}/Cargo.lock"
       ];
     };
     preBuild = ''
@@ -190,7 +187,7 @@ let
 
       preBuild = ''
         # trunk can't find `index.html` unless we're in the crate directory
-        cd ${relativeCratePath}
+        cd ${crate_def.relativePath}
       '';
       cargoExtraArgs = lib.concatStringsSep " " [
         "--bin ${crate_def.binName}"
@@ -220,7 +217,7 @@ let
         fi
 
         # cd-ing into the crate directory because `cargo tauri build` does not support `-p`
-        pushd ${relativeCratePath}
+        pushd ${crate_def.relativePath}
 
         # extra config is merged with `tauri.conf.json` in the source tree
         cargo tauri build $targetArg --ci --config ${pkgs.writeText "tauri.conf.json" (builtins.toJSON crate_def.extraTauriConf)} -- --message-format json-render-diagnostics >"$cargoBuildLog"

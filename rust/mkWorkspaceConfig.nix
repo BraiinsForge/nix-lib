@@ -18,17 +18,19 @@ let
 in
 with builtins;
 let
+  workspace_src = builtins.path { path = src; name = "workspace-src"; };
+
   manifests_src = nix-filter.lib.filter {
-    root = src;
+    root = workspace_src;
     include = [
       (nix-filter.lib.and
         nix-filter.lib.isDirectory
         (_: p: _: ((match ".*/(src|assets|proto)/.*" (toString p)) == null))
       )
       (nix-filter.lib.matchExt "toml")
-      (src + /Cargo.toml)
-      (src + /Cargo.lock)
-      (src + /.cargo)
+      "${workspace_src}/Cargo.toml"
+      "${workspace_src}/Cargo.lock"
+      "${workspace_src}/.cargo"
     ];
   };
 
@@ -89,7 +91,8 @@ let
 in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
+    src = workspace_src;
+    inherit env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
   };
 
