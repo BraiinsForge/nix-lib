@@ -34,11 +34,11 @@ let lib = pkgs.lib; in
   mapAttrValues = f: set: lib.mapAttrs' (name: value: { inherit name; value = f value; }) set;
 
   # write a shell application with a clean env
-  writeCleanEnvShellApp = name: deps: text: pkgs.writeShellApplication {
-    inherit name text;
+  writeCleanEnvShellApp = { name, text, deps ? [ ], env ? { }, excludeShellChecks ? [ ], meta ? { } }: pkgs.writeShellApplication {
+    inherit name text meta;
     runtimeInputs = deps;
-    runtimeEnv.PATH = null;
-    excludeShellChecks = [ "SC2123" ];
+    runtimeEnv = env // { PATH = null; };
+    excludeShellChecks = excludeShellChecks ++ [ "SC2123" ];
   };
 
   # wrapper around `pkgs.dockerTools.buildImage`
