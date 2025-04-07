@@ -103,7 +103,7 @@ let
   # saving a lot of time.
   ####################################################################
   commonCargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
-    src = workspace.manifests_src;
+    src = workspace.src;
     pname = "workspace" + profile_suffix;
     version = "0.0.0";
     cargoExtraArgs = "--locked --all-targets";

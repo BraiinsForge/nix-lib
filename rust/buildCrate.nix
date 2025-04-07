@@ -36,8 +36,7 @@ let
   cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
-      # this is not a mistake, `packageName` is actually needed for `--bin`
-      "--bin crane-dummy-${crate_def.packageName}"
+      "--bin ${crate_def.binName}"
       (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
       featuresArgs
     ];
@@ -46,7 +45,7 @@ let
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
-    src = craneLib.mkDummySrc { src = workspace.manifests_src; };
+    src = craneLib.mkDummySrc { src = workspace.src; };
     doCheck = false;
   });
 
@@ -84,7 +83,6 @@ let
     cd ${manifestCratePath}
     mkdir $out
     gen_sources () {
-        set -x
         curr_dir="$(pwd)"
         crate_dir="$(dirname $1)/"
         echo "{ me = \"$crate_dir\"; srcs = [" >> $out/paths.tmp
@@ -97,7 +95,7 @@ let
         sed -i "s|\./|$self|" $out/paths.tmp
         cat $out/paths.tmp > $out/paths.nix
         rm $out/paths.tmp
-        set +x
+        cat $out/paths.nix | ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt
     }
     gen_sources ./Cargo.toml
   '';

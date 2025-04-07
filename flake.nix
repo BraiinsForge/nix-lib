@@ -7,8 +7,8 @@
     nixpkgs-do-not-override.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     flake-utils.url = "github:numtide/flake-utils";
-    nix-filter.url = "github:numtide/nix-filter";
-    crane.url = "github:ipetkov/crane/v0.19.1";
+    nix-filter.url = "github:numtide/nix-filter"; # TODO: replace with filesets
+    crane.url = "github:ipetkov/crane/v0.20.2";
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs-do-not-override";
