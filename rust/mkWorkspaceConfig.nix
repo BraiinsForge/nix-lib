@@ -90,11 +90,11 @@ in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
     inherit src env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
-    inherit manifests_src manifestSearch;
+    inherit manifestSearch;
   };
 
   # not used normally but can be used for debugging purposes
   internal = {
-    inherit manifests_src manifestSearch;
+    inherit manifestSearch;
   };
 }
