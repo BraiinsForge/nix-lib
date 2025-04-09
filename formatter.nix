@@ -7,6 +7,7 @@ pkgs:
 , protobuf ? false
 , toml ? false
 , yaml ? false
+, json ? false
 , copyright ? false
 , config ? { }
 }:
@@ -14,7 +15,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml copyright;
+    inherit nix rust python shell protobuf toml yaml json copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -79,6 +80,11 @@ let
           command = lib.getExe pkgs.yamlfmt;
           options = [ "-conf" ./fmt-assets/yamlfmt.yml ];
           includes = [ "*.yaml" "*.yml" ];
+        };
+        json = mkIf args.json {
+          command = lib.getExe pkgs.jsonfmt;
+          options = [ "-w" ];
+          includes = [ "*.json" ];
         };
         copyright = mkIf (args.copyright && !args.config.withOpenDir) {
           command = lib.getExe pkgs.addlicense;
