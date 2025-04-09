@@ -1,15 +1,15 @@
 pkgs:
 # user-provided args
-{ nix ? false
-, rust ? false
-, python ? false
-, shell ? false
-, protobuf ? false
-, toml ? false
-, yaml ? false
-, json ? false
-, markdown ? false
-, copyright ? false
+{ nix ? true
+, rust ? true
+, python ? true
+, shell ? true
+, protobuf ? true
+, toml ? true
+, yaml ? true
+, json ? true
+, markdown ? true
+, copyright ? true
 , config ? { }
 }:
 let

@@ -13,14 +13,6 @@ NixLib consists of:
 - Collection of smaller utilities
   - `mkApp`, `strftime`, `readYaml`, `mapAttrNames`, `mapAttrValues`, `writeCleanEnvShellApp` and maybe more
 
-[crane]: https://github.com/ipetkov/crane
-
-[docker-spider]: https://gitlab.ii.zone/bos/docker-spider
-
-[treefmt]: https://github.com/numtide/treefmt
-
-[treefmt-nix]: https://github.com/numtide/treefmt-nix
-
 ### Projects currently using NixLib
 
 Only projects listed here are supported by the NixLib maintainers. Add a link to your project if you want to receive
@@ -32,3 +24,8 @@ free updates and support.
 - https://gitlab.ii.zone/bos/crafwler
 - https://gitlab.ii.zone/bos/ci-tools
 - https://gitlab.ii.zone/tooling/power-price-poller
+
+[crane]: https://github.com/ipetkov/crane
+[docker-spider]: https://gitlab.ii.zone/bos/docker-spider
+[treefmt]: https://github.com/numtide/treefmt
+[treefmt-nix]: https://github.com/numtide/treefmt-nix

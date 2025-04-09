@@ -59,10 +59,6 @@
       in
       {
         braiinsfmt = import ./formatter.nix pkgs;
-        formatter = self.braiinsfmt.${localSystem} {
-          nix = true;
-          toml = true;
-          yaml = true;
-        };
+        formatter = self.braiinsfmt.${localSystem} { };
       });
 }
