@@ -8,6 +8,7 @@ pkgs:
 , toml ? false
 , yaml ? false
 , json ? false
+, markdown ? false
 , copyright ? false
 , config ? { }
 }:
@@ -15,7 +16,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json copyright;
+    inherit nix rust python shell protobuf toml yaml json markdown copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -85,6 +86,11 @@ let
           command = lib.getExe pkgs.jsonfmt;
           options = [ "-w" ];
           includes = [ "*.json" ];
+        };
+        markdown = mkIf args.markdown {
+          command = lib.getExe pkgs.mdformat;
+          options = [ "--number" "--wrap=120" ];
+          includes = [ "*.md" "*.markdown" ];
         };
         copyright = mkIf (args.copyright && !args.config.withOpenDir) {
           command = lib.getExe pkgs.addlicense;
