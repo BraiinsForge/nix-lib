@@ -125,13 +125,16 @@ pkgs.writeShellApplication {
   runtimeEnv.PATH = null;
   excludeShellChecks = [ "SC2123" ];
   text = ''
-    # remove `.` added automatically by `nix fmt` because it breaks `treefmt` when executed from a subdirectory
     args=("$@")
-    for i in "''${!args[@]}"; do
-      if [[ ''${args[i]} == "." ]]; then
-        unset 'args[i]'
-      fi
-    done
+
+    ${lib.optionalString (lib.versionOlder builtins.nixVersion "2.25") ''
+      # remove `.` added automatically by `nix fmt` because it breaks `treefmt` when executed from a subdirectory
+      for i in "''${!args[@]}"; do
+        if [[ ''${args[i]} == "." ]]; then
+          unset 'args[i]'
+        fi
+      done
+    ''}
 
     if tree_root=$(git rev-parse --show-toplevel 2>/dev/null); then
       walk="git"
