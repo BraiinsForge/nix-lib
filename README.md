@@ -13,17 +13,16 @@ NixLib consists of:
 - Collection of smaller utilities
   - `mkApp`, `strftime`, `readYaml`, `mapAttrNames`, `mapAttrValues`, `writeCleanEnvShellApp` and maybe more
 
-### Projects currently using NixLib
-
-Only projects listed here are supported by the NixLib maintainers. Add a link to your project if you want to receive
-free updates and support.
+### List of Projects Using Nix
 
 - https://gitlab.ii.zone/tooling/tooling
-- https://gitlab.ii.zone/pool/bos-main
-- https://gitlab.ii.zone/bos/templates/nix-rust-template
+- https://gitlab.ii.zone/bos/bos-main
+- https://gitlab.ii.zone/nix/rust-template
 - https://gitlab.ii.zone/bos/crafwler
-- https://gitlab.ii.zone/bos/ci-tools
+- https://gitlab.ii.zone/nix/ci-tools
 - https://gitlab.ii.zone/tooling/power-price-poller
+- https://gitlab.ii.zone/braiins-manager/rust-backend
+- https://gitlab.ii.zone/frontend/main
 
 [crane]: https://github.com/ipetkov/crane
 [docker-spider]: https://gitlab.ii.zone/bos/docker-spider
