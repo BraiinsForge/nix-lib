@@ -7,6 +7,8 @@ crate_def: { minimal_deps ? profile.minimal_deps
            , env ? { }
            , features ? [ ]
            , noDefaultFeatures ? false
+           , runtimeDeps ? profile.runtimeDeps
+           , wrapNixGL ? profile.wrapNixGL
            }:
 let crate = { inherit minimal_deps denix upx env features noDefaultFeatures; }; in
 let
@@ -177,7 +179,19 @@ let
         done
       '' + lib.optionalString doUpx ''
         ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
-      '';
+      '' + lib.optionalString (runtimeDeps != [ ] || wrapNixGL) (
+        let
+          wrapper = import ../wrapper.nix ({ inherit runtimeDeps wrapNixGL lib; inherit (profile.build_pkgs) runtimeShell; inherit (pkgs) runCommand; } // (if wrapNixGL then {
+            inherit (profile.build_pkgs) mesa libglvnd;
+          } else { }));
+        in
+        ''
+          cp $out/bin/${crate_def.binName} $out/bin/.${crate_def.binName}-wrapped
+          echo "${wrapper}" > $out/bin/${crate_def.binName}
+          echo "exec $out/bin/.${crate_def.binName}-wrapped" >> $out/bin/${crate_def.binName}
+          chmod +x $out/bin/${crate_def.binName}
+        ''
+      );
     });
     trunk = craneLib.buildTrunkPackage (commonArgs // packageCommonArgs // wasmBindgenCliExtension // {
       cargoArtifacts = null;
