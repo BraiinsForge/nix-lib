@@ -8,6 +8,7 @@ crate_def: { minimal_deps ? profile.minimal_deps
            , features ? [ ]
            , noDefaultFeatures ? false
            , runtimeDeps ? profile.runtimeDeps
+           , runtimeEnv ? profile.runtimeEnv
            , wrapNixGL ? profile.wrapNixGL
            }:
 let crate = { inherit minimal_deps denix upx env features noDefaultFeatures; }; in
@@ -179,9 +180,9 @@ let
         done
       '' + lib.optionalString doUpx ''
         ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
-      '' + lib.optionalString (runtimeDeps != [ ] || wrapNixGL) (
+      '' + lib.optionalString (runtimeDeps != [ ] || runtimeEnv != { } || wrapNixGL) (
         let
-          wrapper = import ../wrapper.nix ({ inherit runtimeDeps wrapNixGL lib; inherit (profile.build_pkgs) runtimeShell; inherit (pkgs) runCommand; } // (if wrapNixGL then {
+          wrapper = import ../wrapper.nix ({ inherit runtimeDeps runtimeEnv wrapNixGL lib; inherit (profile.build_pkgs) runtimeShell; inherit (pkgs) runCommand; } // (if wrapNixGL then {
             inherit (profile.build_pkgs) mesa libglvnd;
           } else { }));
         in

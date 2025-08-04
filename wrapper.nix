@@ -2,6 +2,7 @@
 , lib
 , runCommand
 , runtimeDeps ? [ ]
+, runtimeEnv ? { }
 , wrapNixGL ? false
 , mesa ? null
 , libglvnd ? null
@@ -26,5 +27,5 @@
     export LIBVA_DRIVERS_PATH=${lib.makeSearchPathOutput "out" "lib/dri" [mesa]}
     ${''export __EGL_VENDOR_LIBRARY_FILENAMES=${mesa.drivers}/share/glvnd/egl_vendor.d/50_mesa.json"''${__EGL_VENDOR_LIBRARY_FILENAMES:+:$__EGL_VENDOR_LIBRARY_FILENAMES}"''}
     export LD_LIBRARY_PATH=${lib.makeLibraryPath ([mesa] ++ runtimeDeps)}:${glxindirect}/lib:${lib.makeLibraryPath [libglvnd]}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-  ''
+  '' + lib.concatStrings (lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg value}\n") runtimeEnv)
 ))
