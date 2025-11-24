@@ -9,6 +9,7 @@ pkgs:
 , yaml ? true
 , json ? true
 , markdown ? true
+, caddyfile ? true
 , copyright ? true
 , config ? { }
 }:
@@ -16,7 +17,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json markdown copyright;
+    inherit nix rust python shell protobuf toml yaml json markdown caddyfile copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -91,6 +92,11 @@ let
           command = lib.getExe pkgs.mdformat;
           options = [ "--number" "--wrap=120" ];
           includes = [ "*.md" "*.markdown" ];
+        };
+        caddyfile = mkIf args.caddyfile {
+          command = lib.getExe pkgs.caddy;
+          options = [ "fmt" "--overwrite" ];
+          includes = [ "Caddyfile" "*.caddyfile" ];
         };
         copyright = mkIf (args.copyright && !args.config.withOpenDir) {
           command = lib.getExe pkgs.addlicense;
