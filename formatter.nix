@@ -8,6 +8,11 @@ pkgs:
 , toml ? true
 , yaml ? true
 , json ? true
+, javascript ? true
+, typescript ? true
+, css ? true
+, html ? true
+, graphql ? true
 , markdown ? true
 , caddyfile ? true
 , copyright ? true
@@ -17,7 +22,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json markdown caddyfile copyright;
+    inherit nix rust python shell protobuf toml yaml json javascript typescript css html graphql markdown caddyfile copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -84,9 +89,34 @@ let
           includes = [ "*.yaml" "*.yml" ];
         };
         json = mkIf args.json {
-          command = lib.getExe pkgs.jsonfmt;
-          options = [ "-w" ];
-          includes = [ "*.json" ];
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.json" "*.jsonc" ];
+        };
+        javascript = mkIf args.javascript {
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.js" "*.mjs" "*.cjs" "*.jsx" ];
+        };
+        typescript = mkIf args.typescript {
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.ts" "*.mts" "*.cts" "*.tsx" ];
+        };
+        css = mkIf args.css {
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.css" ];
+        };
+        html = mkIf args.html {
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.html" "*.htm" ];
+        };
+        graphql = mkIf args.graphql {
+          command = lib.getExe pkgs.biome;
+          options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
+          includes = [ "*.graphql" "*.gql" ];
         };
         markdown = mkIf args.markdown {
           command = lib.getExe pkgs.mdformat;
@@ -96,7 +126,7 @@ let
         caddyfile = mkIf args.caddyfile {
           command = lib.getExe pkgs.caddy;
           options = [ "fmt" "--overwrite" ];
-          includes = [ "Caddyfile" "*.caddyfile" ];
+          includes = [ "Caddyfile" "**/Caddyfile" "*.caddyfile" ];
         };
         copyright = mkIf (args.copyright && !args.config.withOpenDir) {
           command = lib.getExe pkgs.addlicense;
