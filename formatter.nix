@@ -123,9 +123,13 @@ let
           options = [ "--number" "--wrap=120" ];
           includes = [ "*.md" "*.markdown" ];
         };
+        # caddy fmt only accepts one file at a time, so we loop
         caddyfile = mkIf args.caddyfile {
-          command = lib.getExe pkgs.caddy;
-          options = [ "fmt" "--overwrite" ];
+          command = pkgs.writeShellScript "caddy-format" ''
+            for file in "$@"; do
+              ${lib.getExe pkgs.caddy} fmt --overwrite "$file"
+            done
+          '';
           includes = [ "Caddyfile" "**/Caddyfile" "*.caddyfile" ];
         };
         copyright = mkIf (args.copyright && !args.config.withOpenDir) {

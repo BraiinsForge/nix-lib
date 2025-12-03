@@ -18,12 +18,12 @@ for clean_file in "$SCRIPT_DIR/clean/"*; do
     filename=$(basename "$clean_file")
     temp_file="$TEMP_DIR/$filename"
 
-    if [[ ! -f "$temp_file" ]]; then
+    if [[ ! -f $temp_file ]]; then
         echo "${YELLOW}SKIP${RESET}: $filename (not in dirty/)"
         continue
     fi
 
-    if diff -q "$clean_file" "$temp_file" > /dev/null 2>&1; then
+    if diff -q "$clean_file" "$temp_file" >/dev/null 2>&1; then
         echo "${GREEN}PASS${RESET}: $filename"
     else
         echo "${RED}FAIL${RESET}: $filename"
