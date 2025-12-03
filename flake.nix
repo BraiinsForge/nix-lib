@@ -61,5 +61,9 @@
         braiinsfmt = import ./formatter.nix pkgs;
         formatter = self.braiinsfmt.${localSystem} { };
         packages.braiinsfmt = self.braiinsfmt.${localSystem} { };
+
+        devShells.default = pkgs.mkShell {
+          packages = [ (self.braiinsfmt.${localSystem} { }) ];
+        };
       });
 }
