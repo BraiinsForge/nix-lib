@@ -123,11 +123,18 @@ let
           options = [ "--number" "--wrap=120" ];
           includes = [ "*.md" "*.markdown" ];
         };
-        # caddy fmt only accepts one file at a time, so we loop
+        # caddy fmt only accepts one file at a time, so we loop.
+        # We check with --diff first (exits 1 when changes needed) and only
+        # overwrite if formatting is required. This prevents unnecessary mtime
+        # updates which cause treefmt to detect false positives in CI where
+        # files from Nix store have epoch timestamps (1970-01-01).
         caddyfile = mkIf args.caddyfile {
           command = pkgs.writeShellScript "caddy-format" ''
+            caddy=${lib.getExe pkgs.caddy}
             for file in "$@"; do
-              ${lib.getExe pkgs.caddy} fmt --overwrite "$file"
+              if ! "$caddy" fmt --diff "$file" >/dev/null 2>&1; then
+                "$caddy" fmt --overwrite "$file"
+              fi
             done
           '';
           includes = [ "Caddyfile" "**/Caddyfile" "*.caddyfile" ];
