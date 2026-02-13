@@ -119,7 +119,11 @@ let
           includes = [ "*.graphql" "*.gql" ];
         };
         markdown = mkIf args.markdown {
-          command = lib.getExe pkgs.mdformat;
+          command = lib.getExe (pkgs.mdformat.withPlugins (p: [
+            p.mdformat-gfm
+            p.mdformat-frontmatter
+            p.mdformat-simple-breaks
+          ]));
           options = [ "--number" "--wrap=120" ];
           includes = [ "*.md" "*.markdown" ];
         };
