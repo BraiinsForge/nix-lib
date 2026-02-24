@@ -7,22 +7,22 @@ let lib = pkgs.lib; in
 
   # usage: `out = strftime 1706207938 "%Y-%m-%d_%H-%M-%S";`
   strftime = ts: fmt:
-    builtins.readFile (pkgs.runCommand "strftime" { } ''echo -n $(date -d @"${builtins.toString ts}" +"${fmt}") > $out'');
+    builtins.readFile (pkgs.runCommand "strftime" { } ''echo -n $(date -d @"${toString ts}" +"${fmt}") > $out'');
 
   # usage: `readYaml ./path/to/file.yml`
-  readYaml = path:
+  readYaml = file:
     let
       jsonOutputDrv = pkgs.runCommand "yaml2json" { } ''
-        ${pkgs.remarshal}/bin/remarshal -if yaml -i "${path}" -of json -o "$out"
+        ${pkgs.remarshal}/bin/remarshal -if yaml -i "${file}" -of json -o "$out"
       '';
     in
     builtins.fromJSON (builtins.readFile jsonOutputDrv);
 
   # usage: `readJson5 ./path/to/file.json5`
-  readJson5 = path:
+  readJson5 = file:
     let
       jsonOutputDrv = pkgs.runCommand "json52json" { } ''
-        ${pkgs.python3Packages.json5}/bin/pyjson5 --as-json "${path}" > "$out"
+        ${pkgs.python3Packages.json5}/bin/pyjson5 --as-json "${file}" > "$out"
       '';
     in
     builtins.fromJSON (builtins.readFile jsonOutputDrv);
@@ -73,7 +73,7 @@ let lib = pkgs.lib; in
           ${docker} push "${imageTag image}"
         '')
         images);
-      ammendImages = images: builtins.concatStringsSep " " (map
+      amendImages = images: builtins.concatStringsSep " " (map
         (image: ''--amend "${imageTag image}"'')
         images);
     in
@@ -91,7 +91,7 @@ let lib = pkgs.lib; in
 
       ${loadAndPush images}
 
-      ${docker} manifest create "$TAG" ${ammendImages images}
+      ${docker} manifest create "$TAG" ${amendImages images}
       ${docker} manifest push --purge "$TAG"
     '';
 
