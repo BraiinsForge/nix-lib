@@ -40,6 +40,11 @@ let
       host_cc = "${pkgs.pkgsBuildBuild.stdenv.cc}/bin/${stdenv.cc.nativePrefix}cc";
     in
     {
+      # Use the cross stdenv so that Crane's mkCargoDerivation picks it up
+      # instead of the native one. This ensures the wrapper markers
+      # (NIX_CC_WRAPPER_TARGET_HOST_*) match the target triple, allowing
+      # NIX_LDFLAGS to be mangled into the target-qualified variant.
+      inherit stdenv;
       "CC_${target'}" = cross_cc;
       "CARGO_TARGET_${TARGET'}_LINKER" = cross_cc;
       CARGO_BUILD_TARGET = rustCrossTarget;
@@ -77,9 +82,10 @@ let
         buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs)
           ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]));
 
-        # special packages just for windows/darwin cross-compilation
-        # plus libiconv, which is needed on both Mac and Windows
-        depsBuildBuild = lib.optionals buildingForWindows (with build_pkgs; [ libiconv stdenv.cc windows.pthreads ]);
+        # Native compiler for build scripts / proc-macros when cross-compiling,
+        # plus special packages for windows/darwin cross-compilation.
+        depsBuildBuild = lib.optionals (rustCrossTarget != null) [ pkgs.stdenv.cc ]
+          ++ lib.optionals buildingForWindows (with build_pkgs; [ libiconv stdenv.cc windows.pthreads ]);
 
         CARGO_PROFILE = rustProfile;
 
