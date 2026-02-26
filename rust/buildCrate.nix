@@ -21,6 +21,13 @@ let
   commonArgs = profile.commonArgs;
 in
 let
+  finalRuntimeDeps =
+    if builtins.isFunction runtimeDeps then runtimeDeps pkgs
+    else runtimeDeps;
+  finalRuntimeEnv =
+    if builtins.isFunction runtimeEnv then runtimeEnv pkgs
+    else runtimeEnv;
+
   featuresArgs =
     let
       noDefaultFeaturesArg = if crate.noDefaultFeatures then "--no-default-features" else "";
@@ -172,10 +179,12 @@ let
         done
       '' + lib.optionalString doUpx ''
         ${pkgs.pkgsBuildBuild.upx}/bin/upx ${upxArgs} $out/bin/*
-      '' + lib.optionalString (runtimeDeps != [ ] || runtimeEnv != { } || wrapNixGL) (
+      '' + lib.optionalString (finalRuntimeDeps != [ ] || finalRuntimeEnv != { } || wrapNixGL) (
         let
           wrapper = import ../wrapper.nix ({
-            inherit runtimeDeps runtimeEnv wrapNixGL lib;
+            inherit wrapNixGL lib;
+            runtimeDeps = finalRuntimeDeps;
+            runtimeEnv = finalRuntimeEnv;
             inherit (pkgs) runtimeShell;
             inherit (pkgs) runCommand;
           } // (if wrapNixGL then {
