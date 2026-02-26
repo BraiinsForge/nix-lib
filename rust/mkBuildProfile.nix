@@ -212,6 +212,7 @@ in
   deps = commonCargoArtifacts;
   inherit mkShell shell;
   inherit build clippy test nextest;
+  inherit pkgs;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts;
