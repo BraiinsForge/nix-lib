@@ -80,12 +80,13 @@ let
         # packages specified in workspace and profile definitions
         nativeBuildInputs = (workspace.nativeDeps pkgs) ++ (nativeDeps pkgs);
         buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs)
-          ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]));
+          ++ (lib.optionals buildingForWindows (with build_pkgs; [ windows.pthreads ]))
+          ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])) ;
 
         # Native compiler for build scripts / proc-macros when cross-compiling,
         # plus special packages for windows/darwin cross-compilation.
         depsBuildBuild = lib.optionals (rustCrossTarget != null) [ pkgs.stdenv.cc ]
-          ++ lib.optionals buildingForWindows (with build_pkgs; [ libiconv stdenv.cc windows.pthreads ]);
+          ++ lib.optionals buildingForWindows (with pkgs; [ libiconv stdenv.cc ]);
 
         CARGO_PROFILE = rustProfile;
 
