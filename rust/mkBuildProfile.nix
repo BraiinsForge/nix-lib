@@ -81,7 +81,7 @@ let
         nativeBuildInputs = (workspace.nativeDeps pkgs) ++ (nativeDeps pkgs);
         buildInputs = (workspace.targetDeps build_pkgs) ++ (targetDeps build_pkgs)
           ++ (lib.optionals buildingForWindows (with build_pkgs; [ windows.pthreads ]))
-          ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])) ;
+          ++ (lib.optionals buildingForDarwin (with build_pkgs; [ libiconv ])) ;
 
         # Native compiler for build scripts / proc-macros when cross-compiling,
         # plus special packages for windows/darwin cross-compilation.
