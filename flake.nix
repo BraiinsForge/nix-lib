@@ -42,17 +42,8 @@
             inherit pkgs craneLib docker-spider nix-filter localSystem;
           };
 
-          mkCrossPkgs = imported_nixpkgs: { arch, extras ? { } }:
-            let
-              base = {
-                inherit localSystem;
-                crossSystem.config = arch;
-                config.allowUnsupportedSystem = true;
-              };
-            in
-            imported_nixpkgs (pkgs.lib.recursiveUpdate base extras);
-
         } // import ./lib.nix pkgs;
+
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
         pkgs = import nixpkgs-do-not-override { inherit localSystem; };
