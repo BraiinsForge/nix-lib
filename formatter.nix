@@ -11,6 +11,7 @@ pkgs:
 , javascript ? true
 , typescript ? true
 , css ? true
+, scss ? true
 , html ? true
 , graphql ? true
 , markdown ? true
@@ -22,7 +23,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json javascript typescript css html graphql markdown caddyfile copyright;
+    inherit nix rust python shell protobuf toml yaml json javascript typescript css scss html graphql markdown caddyfile copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -107,6 +108,11 @@ let
           command = lib.getExe pkgs.biome;
           options = [ "format" "--write" "--config-path" ./fmt-assets/biome.json ];
           includes = [ "*.css" ];
+        };
+        scss = mkIf args.scss {
+          command = lib.getExe pkgs.prettier;
+          options = [ "--write" ];
+          includes = [ "*.scss" "*.sass" ];
         };
         html = mkIf args.html {
           command = lib.getExe pkgs.biome;
