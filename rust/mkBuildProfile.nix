@@ -6,7 +6,7 @@ inputs: workspace:
 , suffix ? null
 , rustCrossTarget ? null
 , rustProfile ? "dev"
-, minimal_deps ? false
+, minimalDeps ? false
 , denix ? false
 , upx ? "none"
 , env ? { }
@@ -197,7 +197,7 @@ in
   inherit build clippy test nextest;
   inherit rustCrossTarget;
   buildCrate = import ./buildCrate.nix inputs workspace {
-    inherit pkgs craneLib rustCrossTarget rustProfile minimal_deps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
+    inherit pkgs craneLib rustCrossTarget rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts;
     suffix = profile_suffix;
   };

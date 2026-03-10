@@ -1,7 +1,7 @@
 # inherited args
 inputs: workspace: profile:
 # this fn's args
-crate_def: { minimal_deps ? profile.minimal_deps
+crate_def: { minimalDeps ? profile.minimalDeps
            , denix ? profile.denix
            , upx ? profile.upx
            , env ? { }
@@ -11,7 +11,7 @@ crate_def: { minimal_deps ? profile.minimal_deps
            , runtimeEnv ? profile.runtimeEnv
            , wrapNixGL ? profile.wrapNixGL
            }:
-let crate = { inherit minimal_deps denix upx env features noDefaultFeatures; }; in
+let crate = { inherit minimalDeps denix upx env features noDefaultFeatures; }; in
 let
   pkgs = profile.pkgs;
   lib = pkgs.lib;
@@ -39,7 +39,7 @@ let
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
       "--bin ${crate_def.binName}"
-      (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
+      (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
@@ -152,7 +152,7 @@ let
     bin = craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
         "--bin ${crate_def.binName}"
-        (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
+        (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
@@ -207,7 +207,7 @@ let
       '';
       cargoExtraArgs = lib.concatStringsSep " " [
         "--bin ${crate_def.binName}"
-        (if crate.minimal_deps then "--package ${crate_def.packageName}" else "")
+        (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
