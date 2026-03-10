@@ -3,6 +3,7 @@ inputs: workspace:
 # this fn's args
 { pkgs ? inputs.pkgs
 , loadRustToolchain ? inputs.loadRustToolchain
+, rustCrossTargetOverride ? null
 , rustProfile ? "dev"
 , minimalDeps ? false
 , denix ? false
@@ -42,7 +43,7 @@ let
   buildingForDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   isCross = pkgs.stdenv.hostPlatform != pkgs.stdenv.buildPlatform;
 
-  rustCrossTarget = pkgs.stdenv.hostPlatform.rust.rustcTarget;
+  rustCrossTarget = if rustCrossTargetOverride != null then rustCrossTargetOverride else pkgs.stdenv.hostPlatform.rust.rustcTarget;
   target' = lib.replaceStrings [ "-" ] [ "_" ] rustCrossTarget;
   TARGET' = lib.toUpper target';
 
