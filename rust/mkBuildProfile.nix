@@ -4,7 +4,6 @@ inputs: workspace:
 { pkgs ? inputs.pkgs
 , loadRustToolchain ? inputs.loadRustToolchain
 , suffix ? null
-, rustCrossTarget ? null
 , rustProfile ? "dev"
 , minimalDeps ? false
 , denix ? false
@@ -19,7 +18,6 @@ inputs: workspace:
 , wrapNixGL ? false
 }:
 let lib = pkgs.lib; in
-with builtins;
 let
   mkCraneLib = { pkgs, loadRustToolchain, registries ? _: [ ] }:
     let
@@ -43,11 +41,13 @@ let
 
   buildingForWindows = pkgs.stdenv.hostPlatform.isWindows;
   buildingForDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  isCross = pkgs.stdenv.hostPlatform != pkgs.stdenv.buildPlatform;
 
+  rustCrossTarget = pkgs.stdenv.hostPlatform.rust.rustcTarget;
   target' = lib.replaceStrings [ "-" ] [ "_" ] rustCrossTarget;
   TARGET' = lib.toUpper target';
 
-  cargoCrossEnvVars = lib.optionalAttrs (rustCrossTarget != null) (
+  cargoCrossEnvVars = lib.optionalAttrs isCross (
     let
       stdenv = pkgs.stdenv;
       cross_cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
@@ -61,7 +61,8 @@ let
     }
   );
 
-  cargoRunnerEmulator = lib.optionalAttrs (rustCrossTarget != null) {
+# TODO join with cargoCrossEnvVars?
+  cargoRunnerEmulator = lib.optionalAttrs isCross {
     "CARGO_TARGET_${TARGET'}_RUNNER" = pkgs.stdenv.hostPlatform.emulator pkgs.buildPackages;
   };
 
@@ -94,7 +95,7 @@ let
 
         # Native compiler for build scripts / proc-macros when cross-compiling,
         # plus special packages for windows/darwin cross-compilation.
-        depsBuildBuild = lib.optionals (rustCrossTarget != null) [ pkgs.pkgsBuildBuild.stdenv.cc ]
+        depsBuildBuild = lib.optionals isCross [ pkgs.pkgsBuildBuild.stdenv.cc ]
           ++ lib.optionals buildingForWindows [ pkgs.pkgsBuildBuild.libiconv ];
 
         CARGO_PROFILE = rustProfile;
@@ -138,7 +139,7 @@ let
       name = name + profile_suffix;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
       inherit inputsFrom;
-      shellHook = lib.optionalString (rustCrossTarget != null) ''
+      shellHook = lib.optionalString isCross ''
         echo "$(tput bold)Entering cross compilation environment...$(tput sgr0)"
         echo "  - GCC: $(tput setaf 4)$(${pkgs.stdenv.cc.targetPrefix}cc --version | head -n1)$(tput sgr0)"
         echo "  - Rust: $(tput setaf 4)$(rustc --version)$(tput sgr0)"
@@ -195,9 +196,8 @@ in
   deps = commonCargoArtifacts;
   inherit mkShell shell;
   inherit build clippy test nextest;
-  inherit rustCrossTarget;
   buildCrate = import ./buildCrate.nix inputs workspace {
-    inherit pkgs craneLib rustCrossTarget rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
+    inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts;
     suffix = profile_suffix;
   };
