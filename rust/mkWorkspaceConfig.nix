@@ -6,7 +6,6 @@ inputs:
 , rustFlags ? [ ]
 , nativeDeps ? _: [ ]
 , targetDeps ? _: [ ]
-, addSuffixToBinaries ? false
 , enableRustFlagsHack ? false
 , disableKeepGoing ? false
 , wasm-bindgen-cli ? null
@@ -91,7 +90,7 @@ in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
     src = workspace_src;
-    inherit env rustFlags nativeDeps targetDeps addSuffixToBinaries enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
+    inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
   };
 

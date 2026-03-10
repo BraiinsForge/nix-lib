@@ -43,7 +43,7 @@ let
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
-    pname = "${crate_def.binName}" + profile.suffix;
+    pname = crate_def.binName;
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
@@ -117,7 +117,7 @@ let
   # make it more cache sensible.
   ########################################################################
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
-    pname = crate_def.binName + profile.suffix;
+    pname = crate_def.binName;
     doInstallCargoArtifacts = false;
     cargoToml = "${workspace.src}/${crate_def.relativePath}/Cargo.toml";
     cargoLock = "${workspace.src}/Cargo.lock";
@@ -158,11 +158,7 @@ let
       doCheck = false;
       # strip is controlled directly by cargo profile
       dontStrip = true;
-      postInstall = lib.optionalString workspace.addSuffixToBinaries ''
-        for file in $out/bin/*; do
-          mv -v --no-clobber "$file" "''${file}${profile.suffix}" || true
-        done
-      '' + lib.optionalString crate.denix ''
+      postInstall = lib.optionalString crate.denix ''
         for file in $out/bin/*; do
           echo "denixing $file"
           interpreter=$(patchelf --print-interpreter "$file" | sed -r 's#^/nix/store/[^/]*(/.*)$#\1#;t;d')

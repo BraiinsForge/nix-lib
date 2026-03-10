@@ -3,7 +3,6 @@ inputs: workspace:
 # this fn's args
 { pkgs ? inputs.pkgs
 , loadRustToolchain ? inputs.loadRustToolchain
-, suffix ? null
 , rustProfile ? "dev"
 , minimalDeps ? false
 , denix ? false
@@ -36,8 +35,6 @@ let
       })
     ];
   };
-
-  profile_suffix = if suffix != null then "-${suffix}" else "";
 
   buildingForWindows = pkgs.stdenv.hostPlatform.isWindows;
   buildingForDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -124,7 +121,7 @@ let
   ####################################################################
   commonCargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
     src = workspace.src;
-    pname = "workspace" + profile_suffix;
+    pname = "workspace";
     version = "0.0.0";
     cargoExtraArgs = "--locked --all-targets";
     doCheck = false;
@@ -136,7 +133,7 @@ let
     , inputsFrom ? [ ]
     , shellHook ? ""
     }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
-      name = name + profile_suffix;
+      inherit name;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
       inherit inputsFrom;
       shellHook = lib.optionalString isCross ''
@@ -154,7 +151,7 @@ let
     # # TODO: clean source, but include assets
     # src = craneLib.cleanCargoSource workspace.src;
     src = workspace.src;
-    pname = "workspace" + profile_suffix;
+    pname = "workspace";
     cargoArtifacts = commonCargoArtifacts;
     doInstallCargoArtifacts = false;
   } // crateEnv;
@@ -199,6 +196,5 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts;
-    suffix = profile_suffix;
   };
 }
