@@ -1,4 +1,4 @@
-{ pkgs, loadRustToolchain, crane, docker-spider, nix-filter } @ inputs:
+{ pkgs, loadRustToolchain, crane, fenix, docker-spider, nix-filter } @ inputs:
 let
   def = type: { path, packageName, binName ? null, env ? { }, extraTauriConf ? { } }: {
     inherit type packageName env extraTauriConf;
@@ -7,7 +7,7 @@ let
   };
 in
 {
-  toolchain = loadRustToolchain pkgs;
+  toolchain = loadRustToolchain (pkgs.extend inputs.fenix.overlays.default);
 
   mkWorkspaceConfig = import ./mkWorkspaceConfig.nix inputs;
 

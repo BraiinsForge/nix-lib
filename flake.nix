@@ -8,6 +8,7 @@
 
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter"; # TODO: replace with filesets
+    fenix.url = "github:nix-community/fenix";
     crane.url = "github:ipetkov/crane/v0.20.2";
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
@@ -17,8 +18,8 @@
     };
   };
 
-  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, docker-spider, nix-filter, ... }:
-    {
+  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, docker-spider, nix-filter, ... }:
+    rec {
       overlays = {
         default = final: prev: {
           ii = prev.ii // { lib = import ./lib.nix final; };
@@ -35,8 +36,14 @@
         ii = prev.ii // {
           rust = import ./rust {
             pkgs = prev;
-            inherit loadRustToolchain crane nix-filter docker-spider;
+            inherit loadRustToolchain crane fenix nix-filter docker-spider;
           };
+        };
+      };
+
+      mkRustOverlayFromToolchainFile = { file, sha256 }: mkRustOverlay {
+        loadRustToolchain = p: p.fenix.fromToolchainFile {
+          inherit file sha256;
         };
       };
 

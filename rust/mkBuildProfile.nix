@@ -17,6 +17,8 @@ inputs: workspace:
 , wrapNixGL ? false
 }:
 let lib = pkgs.lib; in
+let pkgs' = pkgs; in
+let pkgs = (pkgs'.extend inputs.fenix.overlays.default); in
 let
   mkCraneLib = { pkgs, loadRustToolchain, registries ? _: [ ] }:
     let
@@ -58,7 +60,7 @@ let
     }
   );
 
-# TODO join with cargoCrossEnvVars?
+  # TODO join with cargoCrossEnvVars?
   cargoRunnerEmulator = lib.optionalAttrs isCross {
     "CARGO_TARGET_${TARGET'}_RUNNER" = pkgs.stdenv.hostPlatform.emulator pkgs.buildPackages;
   };
