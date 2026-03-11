@@ -23,6 +23,12 @@
         default = final: prev: {
           ii = prev.ii // { lib = import ./lib.nix final; };
         };
+        downgradeUpxForBeagleBone = final: prev:
+          if prev.stdenv.hostPlatform.isLinux then {
+            # Downgrade UPX to 4.2.4, because 5.0.0 segfaults on beaglebone and 5.0.1 returns `UPX-5.0 wants memfd_create(), or needs /dev/shm(,O_TMPFILE,)`
+            # (nixpkgs commit hash source: https://history.nix-packages.com/package/upx/4.2.4)
+            upx = (builtins.getFlake "github:NixOS/nixpkgs/4abc8841bb6d4dd1b11a032b04a87bd2948502d9").legacyPackages.${prev.hostPlatform.system}.upx;
+          } else { };
       };
 
       mkRustOverlay = { loadRustToolchain }: final: prev: {
