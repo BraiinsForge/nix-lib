@@ -13,12 +13,11 @@ crate_def: { minimal_deps ? profile.minimal_deps
            }:
 let crate = { inherit minimal_deps denix upx env features noDefaultFeatures; }; in
 let
-  pkgs = inputs.pkgs;
-  lib = inputs.pkgs.lib;
-  craneLib = inputs.craneLib;
+  pkgs = profile.pkgs;
+  lib = pkgs.lib;
+  craneLib = profile.craneLib;
   nix-filter = inputs.nix-filter;
   docker-spider = inputs.docker-spider;
-  localSystem = inputs.localSystem;
   commonArgs = profile.commonArgs;
 in
 with builtins;
@@ -86,7 +85,7 @@ let
         curr_dir="$(pwd)"
         crate_dir="$(dirname $1)/"
         echo "{ me = \"$crate_dir\"; srcs = [" >> $out/paths.tmp
-        ${docker-spider.outputs.packages.${localSystem}.default}/bin/docker-spider p --list $1 | awk -- '{print "\"" $0 "\"";}' >> $out/paths.tmp
+        ${docker-spider.outputs.packages.${pkgs.buildPlatform.system}.default}/bin/docker-spider p --list $1 | awk -- '{print "\"" $0 "\"";}' >> $out/paths.tmp
         echo "\"$crate_dir\"" >> $out/paths.tmp
         echo "]; }" >> $out/paths.tmp
         to_replace="$(echo $(pwd) | grep -Eo '/nix/store/[A-Za-z0-9_-]+/')"
@@ -95,7 +94,7 @@ let
         sed -i "s|\./|$self|" $out/paths.tmp
         cat $out/paths.tmp > $out/paths.nix
         rm $out/paths.tmp
-        cat $out/paths.nix | ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt
+        cat $out/paths.nix | ${pkgs.pkgsBuildBuild.nixpkgs-fmt}/bin/nixpkgs-fmt
     }
     gen_sources ./Cargo.toml
   '';
@@ -177,11 +176,15 @@ let
           patchelf --remove-rpath --set-interpreter "$interpreter" "$file"
         done
       '' + lib.optionalString doUpx ''
-        ${pkgs.upx}/bin/upx ${upxArgs} $out/bin/*
+        ${pkgs.pkgsBuildBuild.upx}/bin/upx ${upxArgs} $out/bin/*
       '' + lib.optionalString (runtimeDeps != [ ] || runtimeEnv != { } || wrapNixGL) (
         let
-          wrapper = import ../wrapper.nix ({ inherit runtimeDeps runtimeEnv wrapNixGL lib; inherit (profile.build_pkgs) runtimeShell; inherit (pkgs) runCommand; } // (if wrapNixGL then {
-            inherit (profile.build_pkgs) mesa libglvnd;
+          wrapper = import ../wrapper.nix ({
+            inherit runtimeDeps runtimeEnv wrapNixGL lib;
+            inherit (pkgs) runtimeShell;
+            inherit (pkgs) runCommand;
+          } // (if wrapNixGL then {
+            inherit (pkgs) mesa libglvnd;
           } else { }));
         in
         ''

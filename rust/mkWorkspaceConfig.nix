@@ -13,7 +13,6 @@ inputs:
 }:
 let
   pkgs = inputs.pkgs;
-  lib = inputs.pkgs.lib;
   nix-filter = inputs.nix-filter;
 in
 with builtins;

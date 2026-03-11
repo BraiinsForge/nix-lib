@@ -1,4 +1,4 @@
-{ pkgs, craneLib, docker-spider, nix-filter, localSystem } @ inputs:
+{ pkgs, loadRustToolchain, crane, docker-spider, nix-filter } @ inputs:
 let
   def = type: { path, packageName, binName ? null, env ? { }, extraTauriConf ? { } }: {
     inherit type packageName env extraTauriConf;
@@ -7,6 +7,8 @@ let
   };
 in
 {
+  toolchain = loadRustToolchain pkgs;
+
   mkWorkspaceConfig = import ./mkWorkspaceConfig.nix inputs;
 
   defineCrate = def "bin";

@@ -2,7 +2,7 @@
   description = "NixLib";
 
   inputs = {
-    # This is NOT supposed to be overriden in downstream flakes because we want to ensure that all downstream projects
+    # This is NOT supposed to be overridden in downstream flakes because we want to ensure that all downstream projects
     # are using the same versions of formatters.
     nixpkgs-do-not-override.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -19,30 +19,20 @@
 
   outputs = { self, nixpkgs-do-not-override, flake-utils, crane, docker-spider, nix-filter, ... }:
     {
-      mkOverlay = { loadRustToolchain }:
-        final: prev: rec {
-          ii.lib = self.mkLib final;
-          ii.rustToolchain = loadRustToolchain final;
-          ii.rust = ii.lib.mkRustLib {
-            craneLib = ii.lib.craneLib.overrideToolchain loadRustToolchain;
+      overlays = {
+        default = final: prev: {
+          ii = prev.ii // { lib = import ./lib.nix final; };
+        };
+      };
+
+      mkRustOverlay = { loadRustToolchain }: final: prev: {
+        ii = prev.ii // {
+          rust = import ./rust {
+            pkgs = prev;
+            inherit loadRustToolchain crane nix-filter docker-spider;
           };
         };
-
-      mkLib = pkgs:
-        let
-          localSystem = pkgs.stdenv.buildPlatform.system;
-
-          craneLibOrig = crane.mkLib pkgs;
-          craneLibWithRegistries = craneLibOrig.appendCrateRegistries (import ./registries.nix craneLibOrig);
-        in
-        {
-          craneLib = craneLibWithRegistries;
-
-          mkRustLib = { craneLib ? craneLibWithRegistries }: import ./rust {
-            inherit pkgs craneLib docker-spider nix-filter localSystem;
-          };
-
-        } // import ./lib.nix pkgs;
+      };
 
     } // flake-utils.lib.eachDefaultSystem (localSystem:
       let
