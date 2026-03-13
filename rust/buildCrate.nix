@@ -11,8 +11,8 @@ crate_def: { minimalDeps ? profile.minimalDeps
            , runtimeEnv ? profile.runtimeEnv
            , wrapNixGL ? profile.wrapNixGL
            }:
-let crate = { inherit minimalDeps denix upx env features noDefaultFeatures; }; in
 let
+  crate = { inherit minimalDeps denix upx env features noDefaultFeatures; };
   pkgs = profile.pkgs;
   lib = pkgs.lib;
   craneLib = profile.craneLib;
@@ -20,7 +20,6 @@ let
   docker-spider = inputs.docker-spider;
   commonArgs = profile.commonArgs;
 in
-with builtins;
 let
   featuresArgs =
     let
