@@ -2,6 +2,7 @@
 inputs: workspace:
 # this fn's args
 { pkgs ? inputs.pkgs
+, stdenv ? null
 , loadRustToolchain ? inputs.loadRustToolchain
 , rustCrossTargetOverride ? null
 , rustProfile ? "dev"
@@ -110,7 +111,12 @@ let
       };
       rustFlagsHack = mkRustFlagsHack (rustflags ++ dummy_src_rustflags);
     in
-    args // cargoCrossEnvVars // (if workspace.enableRustFlagsHack then rustFlagsHack else { }) // workspace.env // env;
+    args
+    // cargoCrossEnvVars
+    // (if workspace.enableRustFlagsHack then rustFlagsHack else { })
+    // workspace.env
+    // env
+    // lib.optionalAttrs (stdenv != null) { inherit stdenv; };
 
   ####################################################################
   # build all dependencies of all packages in the virtual workspace
