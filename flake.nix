@@ -52,8 +52,11 @@
         pkgs = import nixpkgs-do-not-override { inherit localSystem; };
       in
       {
+        formatter = self.braiinsfmt.${localSystem} {
+          config.exclude = [ "tests/fmt/dirty/*" ];
+        };
+
         braiinsfmt = import ./formatter.nix pkgs;
-        formatter = self.braiinsfmt.${localSystem} { };
         packages.braiinsfmt = self.braiinsfmt.${localSystem} { };
 
         devShells.default = pkgs.mkShell {
