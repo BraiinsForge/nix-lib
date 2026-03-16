@@ -2,6 +2,7 @@
 inputs: workspace:
 # this fn's args
 { pkgs ? inputs.pkgs
+, libcPkgs ? null
 , stdenv ? null
 , loadRustToolchain ? inputs.loadRustToolchain
 , rustCrossTargetOverride ? null
@@ -18,6 +19,7 @@ inputs: workspace:
 , runtimeEnv ? { }
 , wrapNixGL ? false
 }:
+assert libcPkgs == null || stdenv == null; # only one of those two can be set
 let lib = pkgs.lib; in
 let pkgs' = pkgs; in
 let pkgs = (pkgs'.extend inputs.fenix.overlays.default); in
@@ -116,7 +118,14 @@ let
     // (if workspace.enableRustFlagsHack then rustFlagsHack else { })
     // workspace.env
     // env
-    // lib.optionalAttrs (stdenv != null) { inherit stdenv; };
+    // lib.optionalAttrs (stdenv != null) { inherit stdenv; }
+    // lib.optionalAttrs (libcPkgs != null) {
+      stdenv = (import ../lib.nix pkgs.pkgsBuildBuild).stdenvCustomLibc {
+        inherit pkgs;
+        libc = libcPkgs.glibc;
+        libcxx = libcPkgs.libcxx;
+      };
+    };
 
   ####################################################################
   # build all dependencies of all packages in the virtual workspace
@@ -199,6 +208,7 @@ let
   } // cargoRunnerEmulator);
 in
 {
+  inherit stdenv;
   deps = commonCargoArtifacts;
   inherit mkShell shell;
   inherit build clippy test nextest;
