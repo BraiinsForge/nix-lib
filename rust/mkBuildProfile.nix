@@ -155,11 +155,16 @@ let
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
       inherit inputsFrom;
       shellHook = lib.optionalString isCross ''
-        echo "$(tput bold)Entering cross compilation environment...$(tput sgr0)"
-        echo "  - GCC: $(tput setaf 4)$(${pkgs.stdenv.cc.targetPrefix}cc --version | head -n1)$(tput sgr0)"
-        echo "  - Rust: $(tput setaf 4)$(rustc --version)$(tput sgr0)"
-        echo "  - CARGO_BUILD_TARGET: $(tput setaf 4)$CARGO_BUILD_TARGET$(tput sgr0)"
-        echo "  - CARGO_PROFILE: $(tput setaf 4)$CARGO_PROFILE$(tput sgr0)"
+        if [ -t 1 ]; then
+          _bold=$'\e[1m' _blue=$'\e[34m' _reset=$'\e[0m'
+        else
+          _bold="" _blue="" _reset=""
+        fi
+        echo "''${_bold}Entering cross compilation environment...''${_reset}"
+        echo "  - GCC: ''${_blue}$(${pkgs.stdenv.cc.targetPrefix}cc --version | head -n1)''${_reset}"
+        echo "  - Rust: ''${_blue}$(rustc --version)''${_reset}"
+        echo "  - CARGO_BUILD_TARGET: ''${_blue}$CARGO_BUILD_TARGET''${_reset}"
+        echo "  - CARGO_PROFILE: ''${_blue}$CARGO_PROFILE''${_reset}"
       '' + shellHook;
     });
 
