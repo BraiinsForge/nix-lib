@@ -18,6 +18,7 @@ inputs: workspace:
 , runtimeDeps ? [ ]
 , runtimeEnv ? { }
 , wrapNixGL ? false
+, includeExtraSrc ? workspace.includeExtraSrc
 }:
 assert libcPkgs == null || stdenv == null; # only one of those two can be set
 let lib = pkgs.lib; in
@@ -229,5 +230,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
+    inherit includeExtraSrc;
   };
 }

@@ -10,6 +10,7 @@ crate_def: { minimalDeps ? profile.minimalDeps
            , runtimeDeps ? profile.runtimeDeps
            , runtimeEnv ? profile.runtimeEnv
            , wrapNixGL ? profile.wrapNixGL
+           , includeExtraSrc ? profile.includeExtraSrc
            }:
 let
   crate = { inherit minimalDeps denix upx env features noDefaultFeatures; };
@@ -110,10 +111,10 @@ let
   filteredSrc = nix-filter.lib.filter {
     root = workspace.src;
     include = finalSrc.srcs ++ [
-      "${workspace.src}/.cargo"
-      "${workspace.src}/Cargo.toml"
-      "${workspace.src}/Cargo.lock"
-    ];
+      ".cargo"
+      "Cargo.toml"
+      "Cargo.lock"
+    ] ++ includeExtraSrc;
   };
 
   #######################################################################

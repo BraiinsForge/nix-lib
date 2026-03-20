@@ -9,6 +9,7 @@ inputs:
 , enableRustFlagsHack ? false
 , disableKeepGoing ? false
 , wasm-bindgen-cli ? null
+, includeExtraSrc ? []
 }:
 let
   pkgs = inputs.pkgs;
@@ -92,6 +93,7 @@ in
     src = workspace_src;
     inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
+    inherit includeExtraSrc;
   };
 
   # not used normally but can be used for debugging purposes
