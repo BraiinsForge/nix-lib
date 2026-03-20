@@ -156,10 +156,11 @@ let
     , packages ? [ ]
     , inputsFrom ? [ ]
     , shellHook ? ""
+    , env ? []
     }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
-      inherit inputsFrom;
+      inherit inputsFrom env;
       shellHook = lib.optionalString isCross ''
         if [ -t 1 ]; then
           _bold=$'\e[1m' _blue=$'\e[34m' _reset=$'\e[0m'
