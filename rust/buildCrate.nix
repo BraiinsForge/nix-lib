@@ -104,7 +104,16 @@ let
     }
     gen_sources ./Cargo.toml
   '';
-  final_src = import "${calculateSrc}/paths.nix";
+  finalSrc = import "${calculateSrc}/paths.nix";
+
+  filteredSrc = nix-filter.lib.filter {
+    root = workspace.src;
+    include = finalSrc.srcs ++ [
+      "${workspace.src}/.cargo"
+      "${workspace.src}/Cargo.toml"
+      "${workspace.src}/Cargo.lock"
+    ];
+  };
 
   #######################################################################
   # this is essentially the old bos-main CI mechanism, but better, and
@@ -125,16 +134,9 @@ let
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
     pname = crate_def.binName;
     doInstallCargoArtifacts = false;
-    cargoToml = "${workspace.src}/${crate_def.relativePath}/Cargo.toml";
-    cargoLock = "${workspace.src}/Cargo.lock";
-    src = nix-filter.lib.filter {
-      root = workspace.src;
-      include = final_src.srcs ++ [
-        "${workspace.src}/.cargo"
-        "${workspace.src}/Cargo.toml"
-        "${workspace.src}/Cargo.lock"
-      ];
-    };
+    cargoToml = "${filteredSrc}/${crate_def.relativePath}/Cargo.toml";
+    cargoLock = "${filteredSrc}/Cargo.lock";
+    src = filteredSrc;
     preBuild = ''
       mkdir -p target
       cp -r --no-clobber ${workspace.manifestSearch}/* . 2>/dev/null || true
