@@ -127,6 +127,8 @@ let
       };
     };
 
+  dummySrc = craneLib.mkDummySrc { src = workspace.src; };
+
   # Vendor all Cargo dependencies once per profile.
   cargoVendorDir = craneLib.vendorCargoDeps { src = workspace.src; };
 
@@ -225,6 +227,6 @@ in
   inherit pkgs;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
-    inherit commonArgs commonCargoArtifacts cargoVendorDir;
+    inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
   };
 }

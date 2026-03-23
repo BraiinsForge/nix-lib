@@ -54,7 +54,7 @@ let
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
-    src = craneLib.mkDummySrc { src = workspace.src; };
+    src = profile.dummySrc;
     doCheck = false;
   });
 
@@ -136,8 +136,8 @@ let
     inherit (profile) cargoVendorDir;
     pname = crate_def.binName;
     doInstallCargoArtifacts = false;
-    cargoToml = "${filteredSrc}/${crate_def.relativePath}/Cargo.toml";
-    cargoLock = "${filteredSrc}/Cargo.lock";
+    cargoToml = "${profile.dummySrc}/${crate_def.relativePath}/Cargo.toml";
+    cargoLock = "${profile.dummySrc}/Cargo.lock";
     src = filteredSrc;
     preBuild = ''
       mkdir -p target
