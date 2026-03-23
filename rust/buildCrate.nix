@@ -42,6 +42,7 @@ let
 
   # extend common artifacts with additional artifacts needed just for the current package
   cargoArtifacts = craneLib.mkCargoDerivation (commonArgs // {
+    inherit (profile) cargoVendorDir;
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
       "--bin ${crate_def.binName}"
@@ -132,6 +133,7 @@ let
   # make it more cache sensible.
   ########################################################################
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
+    inherit (profile) cargoVendorDir;
     pname = crate_def.binName;
     doInstallCargoArtifacts = false;
     cargoToml = "${filteredSrc}/${crate_def.relativePath}/Cargo.toml";

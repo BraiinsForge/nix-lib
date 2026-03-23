@@ -127,6 +127,9 @@ let
       };
     };
 
+  # Vendor all Cargo dependencies once per profile.
+  cargoVendorDir = craneLib.vendorCargoDeps { src = workspace.src; };
+
   ####################################################################
   # build all dependencies of all packages in the virtual workspace
   # (equivalent to passing --workspace)
@@ -138,6 +141,7 @@ let
   # saving a lot of time.
   ####################################################################
   commonCargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
+    inherit cargoVendorDir;
     src = workspace.src;
     pname = "workspace";
     version = "0.0.0";
@@ -173,6 +177,7 @@ let
   workspaceCommonArgs = {
     # # TODO: clean source, but include assets
     # src = craneLib.cleanCargoSource workspace.src;
+    inherit cargoVendorDir;
     src = workspace.src;
     pname = "workspace";
     cargoArtifacts = commonCargoArtifacts;
@@ -220,6 +225,6 @@ in
   inherit pkgs;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
-    inherit commonArgs commonCargoArtifacts;
+    inherit commonArgs commonCargoArtifacts cargoVendorDir;
   };
 }
