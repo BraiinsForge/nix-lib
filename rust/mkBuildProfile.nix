@@ -220,12 +220,24 @@ let
     fixupPhase = ":";
     doCheck = true;
   } // cargoRunnerEmulator);
+
+  # derivation that runs `cargo deny check` on the entire workspace
+  mkCargoDeny = {
+    config ? false,
+    checks ? [ "bans" "licenses" "sources" ]
+  }: craneLib.cargoDeny (commonArgs // workspaceCommonArgs // {
+    version = "0.0.0";
+    cargoExtraArgs = if config != false then "--config ${config}" else "";
+    cargoDenyChecks = if builtins.isList checks then builtins.concatStringsSep " " checks else checks;
+    fixupPhase = ":";
+    doCheck = true;
+  });
 in
 {
   inherit stdenv;
   deps = commonCargoArtifacts;
   inherit mkShell shell;
-  inherit build clippy test nextest;
+  inherit build clippy test nextest mkCargoDeny;
   inherit pkgs;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
