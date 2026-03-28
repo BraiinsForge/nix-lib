@@ -20,6 +20,12 @@ let
   nix-filter = inputs.nix-filter;
   docker-spider = inputs.docker-spider;
   commonArgs = profile.commonArgs;
+
+  # When binName is false (e.g. cdylib crates), use packageName for
+  # derivation naming and omit --bin from cargo commands.
+  hasBinTarget = crate_def.binName != false;
+  effectiveName = if hasBinTarget then crate_def.binName else crate_def.packageName;
+  binArg = if hasBinTarget then "--bin ${crate_def.binName}" else "--package ${crate_def.packageName}";
 in
 let
   finalRuntimeDeps =
@@ -46,12 +52,12 @@ let
     inherit (profile) cargoVendorDir;
     buildPhaseCargoCommand = lib.concatStringsSep " " [
       "cargoWithProfile build"
-      "--bin ${crate_def.binName}"
-      (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
+      binArg
+      (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
       featuresArgs
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
-    pname = crate_def.binName;
+    pname = effectiveName;
     pnameSuffix = "-ext";
     version = "0.0.0";
     doInstallCargoArtifacts = true;
@@ -86,7 +92,7 @@ let
   # The list also contains self directory stupidly as `./`, so the bash
   # script that formats docker-spider output into nix fixes this.
   #######################################################################
-  calculateSrc = pkgs.runCommand "${crate_def.binName}-srcpaths" { } ''
+  calculateSrc = pkgs.runCommand "${effectiveName}-srcpaths" { } ''
     cd ${manifestCratePath}
     mkdir $out
     gen_sources () {
@@ -135,7 +141,7 @@ let
   ########################################################################
   packageCommonArgs = profile.crateEnv // crate_def.env // crate.env // {
     inherit (profile) cargoVendorDir;
-    pname = crate_def.binName;
+    pname = effectiveName;
     doInstallCargoArtifacts = false;
     cargoToml = "${profile.dummySrc}/${crate_def.relativePath}/Cargo.toml";
     cargoLock = "${profile.dummySrc}/Cargo.lock";
@@ -162,8 +168,8 @@ let
   package = {
     bin = craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
-        "--bin ${crate_def.binName}"
-        (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
+        binArg
+        (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
@@ -215,8 +221,8 @@ let
         cd ${crate_def.relativePath}
       '';
       cargoExtraArgs = lib.concatStringsSep " " [
-        "--bin ${crate_def.binName}"
-        (if crate.minimalDeps then "--package ${crate_def.packageName}" else "")
+        binArg
+        (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
         featuresArgs
       ];
       doCheck = false;
