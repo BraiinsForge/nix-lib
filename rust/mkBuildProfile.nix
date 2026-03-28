@@ -51,19 +51,23 @@ let
   target' = lib.replaceStrings [ "-" ] [ "_" ] rustCrossTarget;
   TARGET' = lib.toUpper target';
 
-  cargoCrossEnvVars = lib.optionalAttrs isCross (
-    let
-      stdenv = pkgs.stdenv;
-      cross_cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
-      host_cc = "${pkgs.pkgsBuildBuild.stdenv.cc}/bin/${stdenv.cc.nativePrefix}cc";
-    in
-    {
-      "CC_${target'}" = cross_cc;
-      "CARGO_TARGET_${TARGET'}_LINKER" = cross_cc;
-      CARGO_BUILD_TARGET = rustCrossTarget;
-      HOST_CC = host_cc;
-    }
-  );
+  cargoCrossEnvVars = lib.optionalAttrs isCross
+    (
+      let
+        stdenv = pkgs.stdenv;
+        cross_cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
+        host_cc = "${pkgs.pkgsBuildBuild.stdenv.cc}/bin/${stdenv.cc.nativePrefix}cc";
+      in
+      {
+        "CC_${target'}" = cross_cc;
+        "CARGO_TARGET_${TARGET'}_LINKER" = cross_cc;
+        CARGO_BUILD_TARGET = rustCrossTarget;
+        HOST_CC = host_cc;
+      }
+    )
+  // lib.optionalAttrs (!isCross && rustCrossTargetOverride != null) {
+    CARGO_BUILD_TARGET = rustCrossTarget;
+  };
 
   # TODO join with cargoCrossEnvVars?
   cargoRunnerEmulator = lib.optionalAttrs isCross {
