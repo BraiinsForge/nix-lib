@@ -2,6 +2,7 @@
 inputs:
 # this fn's args
 { src
+, workspacePath ? ""
 , env ? { }
 , rustFlags ? [ ]
 , nativeDeps ? _: [ ]
@@ -91,6 +92,7 @@ in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
     src = workspace_src;
+    inherit workspacePath;
     inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
     inherit includeExtraSrc;

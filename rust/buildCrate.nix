@@ -21,6 +21,14 @@ let
   docker-spider = inputs.docker-spider;
   commonArgs = profile.commonArgs;
 
+  workspacePath = workspace.workspacePath;
+  workspacePrefix = lib.optionalString (workspacePath != "") "${workspacePath}/";
+  # Relative path from the workspace root back to the source root,
+  # e.g. "examples" -> "..", "a/b" -> "../..", "" -> "."
+  srcRootFromWorkspace =
+    if workspacePath == "" then "."
+    else lib.concatStringsSep "/" (builtins.map (_: "..") (lib.splitString "/" workspacePath));
+
   # When binName is false (e.g. cdylib crates), use packageName for
   # derivation naming and omit --bin from cargo commands.
   hasBinTarget = crate_def.binName != false;
@@ -62,11 +70,12 @@ let
     version = "0.0.0";
     doInstallCargoArtifacts = true;
     src = profile.dummySrc;
+    postUnpack = profile.workspacePostUnpack;
     doCheck = false;
   });
 
   # crate path within cargo manifest derivation
-  manifestCratePath = "${workspace.manifestSearch}/${crate_def.relativePath}";
+  manifestCratePath = "${workspace.manifestSearch}/${workspacePrefix}${crate_def.relativePath}";
 
   #######################################################################
   # docker-spider is not dead, it's now a nix util :D
@@ -114,13 +123,11 @@ let
   '';
   finalSrc = import "${calculateSrc}/paths.nix";
 
+  cargoFiles = [ "${workspacePrefix}Cargo.toml" "${workspacePrefix}Cargo.lock" ];
+
   filteredSrc = nix-filter.lib.filter {
     root = workspace.src;
-    include = finalSrc.srcs ++ [
-      ".cargo"
-      "Cargo.toml"
-      "Cargo.lock"
-    ] ++ includeExtraSrc;
+    include = finalSrc.srcs ++ [ ".cargo" ] ++ cargoFiles ++ includeExtraSrc;
   };
 
   #######################################################################
@@ -143,12 +150,13 @@ let
     inherit (profile) cargoVendorDir;
     pname = effectiveName;
     doInstallCargoArtifacts = false;
-    cargoToml = "${profile.dummySrc}/${crate_def.relativePath}/Cargo.toml";
-    cargoLock = "${profile.dummySrc}/Cargo.lock";
+    cargoToml = "${profile.dummySrc}/${workspacePrefix}${crate_def.relativePath}/Cargo.toml";
+    cargoLock = "${profile.dummySrc}/${workspacePrefix}Cargo.lock";
     src = filteredSrc;
+    postUnpack = profile.workspacePostUnpack;
     preBuild = ''
       mkdir -p target
-      cp -r --no-clobber ${workspace.manifestSearch}/* . 2>/dev/null || true
+      cp -r --no-clobber ${workspace.manifestSearch}/* ${srcRootFromWorkspace}/ 2>/dev/null || true
     '';
     inherit cargoArtifacts;
   };

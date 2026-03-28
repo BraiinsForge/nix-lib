@@ -132,10 +132,27 @@ let
       };
     };
 
-  dummySrc = craneLib.mkDummySrc { src = workspace.src; };
+  workspacePath = workspace.workspacePath;
+  workspacePrefix = lib.optionalString (workspacePath != "") "${workspacePath}/";
+
+  dummySrc = craneLib.mkDummySrc ({
+    src = workspace.src;
+  } // lib.optionalAttrs (workspacePath != "") {
+    extraDummyScript = ''
+      cp ${workspace.src}/${workspacePrefix}Cargo.lock $out/${workspacePrefix}Cargo.lock
+    '';
+  });
+
+  workspacePostUnpack = lib.optionalString (workspacePath != "") ''
+    sourceRoot="$sourceRoot/${workspacePath}"
+  '';
 
   # Vendor all Cargo dependencies once per profile.
-  cargoVendorDir = craneLib.vendorCargoDeps { src = workspace.src; };
+  cargoVendorDir = craneLib.vendorCargoDeps ({
+    src = workspace.src;
+  } // lib.optionalAttrs (workspacePath != "") {
+    cargoLock = "${workspace.src}/${workspacePrefix}Cargo.lock";
+  });
 
   ####################################################################
   # build all dependencies of all packages in the virtual workspace
@@ -149,11 +166,12 @@ let
   ####################################################################
   commonCargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
     inherit cargoVendorDir;
-    src = workspace.src;
+    inherit dummySrc;
     pname = "workspace";
     version = "0.0.0";
     cargoExtraArgs = "--locked --all-targets";
     doCheck = false;
+    postUnpack = workspacePostUnpack;
   });
 
   mkShell =
@@ -190,6 +208,7 @@ let
     pname = "workspace";
     cargoArtifacts = commonCargoArtifacts;
     doInstallCargoArtifacts = false;
+    postUnpack = workspacePostUnpack;
   } // crateEnv;
 
   # derivation that runs `cargo build` on the entire workspace
@@ -246,6 +265,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv rustFlags nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
-    inherit includeExtraSrc;
+    inherit includeExtraSrc workspacePostUnpack;
   };
 }
