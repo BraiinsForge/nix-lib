@@ -9,7 +9,7 @@ inputs:
 , enableRustFlagsHack ? false
 , disableKeepGoing ? false
 , wasm-bindgen-cli ? null
-, includeExtraSrc ? []
+, includeExtraSrc ? [ ]
 }:
 let
   pkgs = inputs.pkgs;

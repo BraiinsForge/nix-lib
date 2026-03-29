@@ -1,0 +1,23 @@
+stages:
+  - check
+
+.nix:
+  tags: [nix]
+
+format:
+  extends: .nix
+  stage: check
+  script:
+    - nix fmt -- --fail-on-change
+
+test-format:
+  extends: .nix
+  stage: check
+  script:
+    - nix develop --command ./tests/fmt/run.sh
+
+test-checks:
+  extends: .nix
+  stage: check
+  script:
+    - nix develop --command ./tests/checks/run.sh

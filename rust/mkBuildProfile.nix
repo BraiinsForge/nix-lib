@@ -157,7 +157,7 @@ let
     , packages ? [ ]
     , inputsFrom ? [ ]
     , shellHook ? ""
-    , env ? []
+    , env ? [ ]
     }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
@@ -222,16 +222,16 @@ let
   } // cargoRunnerEmulator);
 
   # derivation that runs `cargo deny check` on the entire workspace
-  mkCargoDeny = {
-    config ? false,
-    checks ? [ "bans" "licenses" "sources" ]
-  }: craneLib.cargoDeny (commonArgs // workspaceCommonArgs // {
-    version = "0.0.0";
-    cargoExtraArgs = if config != false then "--config ${config}" else "";
-    cargoDenyChecks = if builtins.isList checks then builtins.concatStringsSep " " checks else checks;
-    fixupPhase = ":";
-    doCheck = true;
-  });
+  mkCargoDeny =
+    { config ? false
+    , checks ? [ "bans" "licenses" "sources" ]
+    }: craneLib.cargoDeny (commonArgs // workspaceCommonArgs // {
+      version = "0.0.0";
+      cargoExtraArgs = if config != false then "--config ${config}" else "";
+      cargoDenyChecks = if builtins.isList checks then builtins.concatStringsSep " " checks else checks;
+      fixupPhase = ":";
+      doCheck = true;
+    });
 in
 {
   inherit stdenv;

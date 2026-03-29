@@ -5,3 +5,7 @@ fmt-run:
 PHONY: fmt-update
 fmt-update:
 	nix develop --command ./fmt/update.sh
+
+PHONY: checks-run
+checks-run:
+	nix develop --command ./checks/run.sh
