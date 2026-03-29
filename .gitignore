@@ -1,1 +1,6 @@
+# Dev tools
 .idea
+.claude
+
+# Nix
+result

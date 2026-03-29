@@ -1,0 +1,77 @@
+graph TD
+    Start([Developer pushes code]) --> Webhook{Webhook received?}
+    Webhook -- Yes --> Checkout[Checkout repository]
+    Webhook -- No --> Dropped>Event dropped]
+
+    subgraph Validation ["Phase 1: Validation"]
+        Checkout --> Lint[/Run linter/]
+        Checkout --> Format[/Check formatting/]
+        Checkout --> TypeCheck[/Type check/]
+        Lint --> LintResult{Pass?}
+        Format --> FormatResult{Pass?}
+        TypeCheck --> TypeResult{Pass?}
+    end
+    LintResult -- Fail --> NotifyFail[[Send failure notification]]
+    FormatResult -- Fail --> NotifyFail
+    TypeResult -- Fail --> NotifyFail
+    LintResult -- Pass --> Gate1
+    FormatResult -- Pass --> Gate1
+    TypeResult -- Pass --> Gate1
+    Gate1{All checks passed?} -- No --> NotifyFail
+    Gate1 -- Yes --> TestPhase
+
+    subgraph TestPhase ["Phase 2: Testing"]
+        UnitTests[\Unit tests\] --> Coverage[(Coverage report)]
+        IntegrationTests[\Integration tests\] --> IntResults[(Integration results)]
+        E2ETests[\E2E tests\] --> E2EResults[(E2E results)]
+    end
+    Gate1 -- Yes --> UnitTests
+    Gate1 -- Yes --> IntegrationTests
+    Gate1 -- Yes --> E2ETests
+    Coverage --> Gate2{Tests passed?}
+    IntResults --> Gate2
+    E2EResults --> Gate2
+    Gate2 -- Fail --> NotifyFail
+
+    subgraph BuildPhase ["Phase 3: Build & Publish"]
+        DockerBuild[Build Docker image] --> Scan{{Security scan}}
+        Scan --> SignImage[Sign image]
+        SignImage --> PushRegistry[(Push to registry)]
+    end
+    Gate2 -- Pass --> DockerBuild
+    PushRegistry --> DeployDecision{Target environment?}
+
+    subgraph DeployStaging ["Deploy: Staging"]
+        StagingDeploy[Deploy to staging] --> StagingSmoke[/Smoke tests/]
+        StagingSmoke --> StagingResult{Healthy?}
+    end
+
+    subgraph DeployProd ["Deploy: Production"]
+        Canary[Canary 10%] -.-> Monitor[/Monitor metrics/]
+        Monitor --> CanaryCheck{Errors < 0.1%?}
+        CanaryCheck -- Yes --> Rollout50[Rollout 50%]
+        Rollout50 -.-> Monitor2[/Monitor metrics/]
+        Monitor2 --> Check50{Healthy?}
+        Check50 -- Yes --> Full[Rollout 100%]
+        CanaryCheck -- No --> Rollback[Rollback]
+        Check50 -- No --> Rollback
+    end
+    DeployDecision -- staging --> StagingDeploy
+    DeployDecision -- production --> Canary
+    StagingResult -- Healthy --> PromotePrompt{Promote to prod?}
+    StagingResult -- Unhealthy --> Rollback2[Rollback staging]
+    Rollback2 --> NotifyFail
+    PromotePrompt -- Yes --> Canary
+    PromotePrompt -- No --> Done([Pipeline complete])
+    Full --> NotifySuccess[[Send success notification]]
+    Rollback --> NotifyFail
+    NotifyFail --> Failed([Pipeline failed]):::failNode
+    NotifySuccess --> Done:::successNode
+    Dropped --> Done
+    classDef failNode fill:#f44336,stroke:#b71c1c,color:#fff,stroke-width:2px
+    classDef successNode fill:#4caf50,stroke:#1b5e20,color:#fff,stroke-width:2px
+    style Validation fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style TestPhase fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style BuildPhase fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style DeployStaging fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style DeployProd fill:#fce4ec,stroke:#b71c1c,stroke-width:2px

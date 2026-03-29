@@ -15,6 +15,7 @@ pkgs:
 , html ? true
 , graphql ? true
 , markdown ? true
+, mermaid ? true
 , caddyfile ? true
 , copyright ? true
 , config ? { }
@@ -23,7 +24,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json javascript typescript css scss html graphql markdown caddyfile copyright;
+    inherit nix rust python shell protobuf toml yaml json javascript typescript css scss html graphql markdown mermaid caddyfile copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -48,6 +49,25 @@ let
     ".hgignore"
     ".svnignore"
   ];
+
+  mermaidFormatter = pkgs.stdenv.mkDerivation {
+    pname = "mermaid-formatter";
+    version = "0.3.0";
+    src = pkgs.fetchurl {
+      url = "https://registry.npmjs.org/mermaid-formatter/-/mermaid-formatter-0.3.0.tgz";
+      hash = "sha256-PKv0cFTu7lr8U5raoGhF/xbjEx1cQEvZ9xhSY51jFHQ=";
+    };
+    dontBuild = true;
+    installPhase = ''
+      mkdir -p $out/lib/mermaid-formatter $out/bin
+      cp -r . $out/lib/mermaid-formatter
+      cat > $out/bin/mermaidfmt <<WRAPPER
+      #!/bin/sh
+      exec ${lib.getExe pkgs.nodejs} $out/lib/mermaid-formatter/dist/cli.js "\$@"
+      WRAPPER
+      chmod +x $out/bin/mermaidfmt
+    '';
+  };
 
   copyrightFiles = [ "*.rs" ];
 
@@ -132,6 +152,20 @@ let
           ]));
           options = [ "--number" "--wrap=120" ];
           includes = [ "*.md" "*.markdown" ];
+        };
+        # mermaidfmt only accepts one file at a time, so we loop.
+        # We compare formatted output before writing to avoid unnecessary
+        # mtime updates (same false-positive issue as caddyfile, see above).
+        mermaid = mkIf args.mermaid {
+          command = pkgs.writeShellScript "mermaid-format" ''
+            mermaidfmt=${mermaidFormatter}/bin/mermaidfmt
+            for file in "$@"; do
+              if ! "$mermaidfmt" "$file" | diff -q - "$file" >/dev/null 2>&1; then
+                "$mermaidfmt" -w "$file"
+              fi
+            done
+          '';
+          includes = [ "*.mermaid" "*.mmd" ];
         };
         # caddy fmt only accepts one file at a time, so we loop.
         # We check with --diff first (exits 1 when changes needed) and only

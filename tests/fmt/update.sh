@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "=== Updating Formatter Snapshots ==="
 
-# shellcheck source=common.sh
+# shellcheck source=_.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_.sh"
 
 echo "Updating snapshots..."
