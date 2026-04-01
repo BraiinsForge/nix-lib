@@ -33,11 +33,12 @@
       };
 
       mkRustOverlay = { loadRustToolchain }: final: prev: {
-        ii = prev.ii // {
+        ii = prev.ii // rec {
           rust = import ./rust {
             pkgs = prev;
             inherit loadRustToolchain crane fenix nix-filter docker-spider;
           };
+          rustToolchain = final.lib.warn "`rustToolchain` is deprecated, please use `rust.toolchain` instead" rust.toolchain;
         };
       };
 
