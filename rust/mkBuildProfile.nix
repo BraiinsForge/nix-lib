@@ -179,7 +179,7 @@ let
     , packages ? [ ]
     , inputsFrom ? [ ]
     , shellHook ? ""
-    , env ? [ ]
+    , env ? {}
     }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
