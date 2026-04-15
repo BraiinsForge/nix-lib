@@ -54,6 +54,7 @@
       in
       {
         formatter = self.braiinsfmt.${localSystem} {
+          justfile = true;
           config.exclude = [ "tests/fmt/dirty/*" ];
         };
 
@@ -65,8 +66,11 @@
 
         devShells.default = pkgs.mkShell {
           packages = [
-            (self.braiinsfmt.${localSystem} { })
-            (self.braiinschk.${localSystem} { })
+            (self.braiinsfmt.${localSystem} { justfile = true; })
+            (self.braiinschk.${localSystem} {
+              justfile = true;
+              config.exclude = [ "tests/fmt/dirty/*" ];
+            })
           ];
         };
       });

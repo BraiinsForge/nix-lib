@@ -1,13 +1,15 @@
 pkgs:
 # user-provided args
 { mermaid ? true
+  # `just --fmt --check` is marked unstable upstream (requires `--unstable`); opt-in.
+, justfile ? false
 , config ? { }
 }:
 let
   lib = pkgs.lib;
 
   args = {
-    inherit mermaid;
+    inherit mermaid justfile;
     config = ({ exclude ? [ ] }: { inherit exclude; }) config;
   };
 
@@ -33,6 +35,17 @@ let
       # go-mermaid only recognizes .mmd, so we pipe via stdin for .mermaid files
       command = pkgs.writeShellScript "mermaid-check" ''
         ${mermaidCheck}/bin/go-mermaid < "$1"
+      '';
+    }
+    {
+      name = "justfile";
+      enabled = args.justfile;
+      includes = [ "justfile" "**/justfile" "Justfile" "**/Justfile" "*.just" "*.justfile" ];
+      # `just --fmt --check` parses the justfile (catching unknown recipe deps,
+      # syntax errors, etc.) and verifies it is canonically formatted.
+      # Does not modify the file. `--fmt` is unstable, hence `--unstable`.
+      command = pkgs.writeShellScript "justfile-check" ''
+        ${lib.getExe pkgs.just} --unstable --fmt --check --justfile "$1"
       '';
     }
   ];

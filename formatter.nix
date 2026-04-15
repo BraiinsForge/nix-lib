@@ -17,6 +17,8 @@ pkgs:
 , markdown ? true
 , mermaid ? true
 , caddyfile ? true
+  # `just --fmt` is marked unstable upstream (requires `--unstable`); opt-in.
+, justfile ? false
 , copyright ? true
 , config ? { }
 }:
@@ -24,7 +26,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit nix rust python shell protobuf toml yaml json javascript typescript css scss html graphql markdown mermaid caddyfile copyright;
+    inherit nix rust python shell protobuf toml yaml json javascript typescript css scss html graphql markdown mermaid caddyfile justfile copyright;
     config = ({ withOpenDir ? false, exclude ? [ ] }: { inherit withOpenDir exclude; }) config;
   };
 
@@ -166,6 +168,19 @@ let
             done
           '';
           includes = [ "*.mermaid" "*.mmd" ];
+        };
+        # `just --fmt` only accepts one file at a time, so we loop.
+        # `just --fmt` is idempotent: it leaves the file (and mtime) untouched
+        # when no reformatting is needed, so no diff-check is required here.
+        # `--fmt` is flagged unstable upstream, hence `--unstable`.
+        justfile = mkIf args.justfile {
+          command = pkgs.writeShellScript "just-format" ''
+            just=${lib.getExe pkgs.just}
+            for file in "$@"; do
+              "$just" --unstable --fmt --justfile "$file"
+            done
+          '';
+          includes = [ "justfile" "**/justfile" "Justfile" "**/Justfile" "*.just" "*.justfile" ];
         };
         # caddy fmt only accepts one file at a time, so we loop.
         # We check with --diff first (exits 1 when changes needed) and only
