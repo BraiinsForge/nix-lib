@@ -3,6 +3,7 @@ inputs:
 # this fn's args
 { src
 , workspacePath ? ""
+, sourceInfo ? null
 , env ? { }
 , rustFlags ? [ ]
 , nativeDeps ? _: [ ]
@@ -96,6 +97,7 @@ in
     inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
     inherit includeExtraSrc;
+    patchSourceInfo = if sourceInfo != null then inputs.patchSourceInfo sourceInfo else x: x;
   };
 
   # not used normally but can be used for debugging purposes

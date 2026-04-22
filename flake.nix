@@ -16,9 +16,10 @@
       inputs.flake-utils.follows = "flake-utils";
       inputs.crane.follows = "crane";
     };
+    nix-source-info.url = "git+ssh://git@gitlab.ii.zone/nix/source-info";
   };
 
-  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, docker-spider, nix-filter, ... }:
+  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, docker-spider, nix-filter, nix-source-info, ... }:
     rec {
       overlays = {
         default = final: prev: {
@@ -37,6 +38,7 @@
           rust = import ./rust {
             pkgs = prev;
             inherit loadRustToolchain crane fenix nix-filter docker-spider;
+            patchSourceInfo = nix-source-info.lib.patchSourceInfo prev;
           };
           rustToolchain = final.lib.warn "`rustToolchain` is deprecated, please use `rust.toolchain` instead" rust.toolchain;
         };

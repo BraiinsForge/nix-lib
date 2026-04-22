@@ -174,7 +174,7 @@ let
 
 
   package = {
-    bin = craneLib.buildPackage (commonArgs // packageCommonArgs // {
+    bin = workspace.patchSourceInfo (craneLib.buildPackage (commonArgs // packageCommonArgs // {
       cargoExtraArgs = lib.concatStringsSep " " [
         binArg
         (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
@@ -217,7 +217,7 @@ let
           chmod +x $out/bin/${crate_def.binName}
         ''
       );
-    });
+    }));
     trunk = craneLib.buildTrunkPackage (commonArgs // packageCommonArgs // wasmBindgenCliExtension // {
       cargoArtifacts = null;
 

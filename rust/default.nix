@@ -1,4 +1,4 @@
-{ pkgs, loadRustToolchain, crane, fenix, docker-spider, nix-filter } @ inputs:
+{ pkgs, loadRustToolchain, ... } @ inputs:
 let
   def = type: { path, packageName, binName ? null, env ? { }, extraTauriConf ? { } }: {
     inherit type packageName env extraTauriConf;

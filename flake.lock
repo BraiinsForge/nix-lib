@@ -117,6 +117,21 @@
         "type": "github"
       }
     },
+    "nix-source-info": {
+      "locked": {
+        "lastModified": 1776861597,
+        "narHash": "sha256-w/+UkH0c5S7f7Jb4Sy4ZYodfhImP69BgWjDn069uZ/4=",
+        "ref": "refs/heads/master",
+        "rev": "559dc19b09bbbf3ee5cfcad9ecef3308c4863c32",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@gitlab.ii.zone/nix/source-info"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@gitlab.ii.zone/nix/source-info"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1772963539,
@@ -156,6 +171,7 @@
         "fenix": "fenix_2",
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
+        "nix-source-info": "nix-source-info",
         "nixpkgs-do-not-override": "nixpkgs-do-not-override"
       }
     },
