@@ -70,6 +70,7 @@
           packages = [
             (self.braiinsfmt.${localSystem} { justfile = true; })
             (self.braiinschk.${localSystem} {
+              shell = true;
               justfile = true;
               config.exclude = [ "tests/fmt/dirty/*" ];
             })

@@ -8,6 +8,7 @@ RESET=$'\033[0m'
 
 echo "=== Formatter Snapshot Tests ==="
 
+# shellcheck source-path=SCRIPTDIR
 # shellcheck source=_.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_.sh"
 

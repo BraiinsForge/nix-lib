@@ -3,6 +3,7 @@ set -euo pipefail
 
 echo "=== Updating Formatter Snapshots ==="
 
+# shellcheck source-path=SCRIPTDIR
 # shellcheck source=_.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_.sh"
 

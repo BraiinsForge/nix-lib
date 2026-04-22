@@ -1,6 +1,8 @@
 pkgs:
 # user-provided args
 { mermaid ? true
+  # Shell linting for tracked shell sources.
+, shell ? false
   # `just --fmt --check` is marked unstable upstream (requires `--unstable`); opt-in.
 , justfile ? false
 , config ? { }
@@ -9,7 +11,7 @@ let
   lib = pkgs.lib;
 
   args = {
-    inherit mermaid justfile;
+    inherit mermaid shell justfile;
     config = ({ exclude ? [ ] }: { inherit exclude; }) config;
   };
 
@@ -46,6 +48,17 @@ let
       # Does not modify the file. `--fmt` is unstable, hence `--unstable`.
       command = pkgs.writeShellScript "justfile-check" ''
         ${lib.getExe pkgs.just} --unstable --fmt --check --justfile "$1"
+      '';
+    }
+    {
+      name = "shell";
+      enabled = args.shell;
+      # shellcheck can lint arbitrary filenames when the dialect is known
+      # (typically from a shebang), but braiinschk currently discovers only
+      # conventional shell script extensions.
+      includes = [ "*.sh" "*.bash" ];
+      command = pkgs.writeShellScript "shell-check" ''
+        exec ${lib.getExe pkgs.shellcheck} -x "$1"
       '';
     }
   ];

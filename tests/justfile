@@ -1,0 +1,8 @@
+fmt-run:
+    nix develop --command ./fmt/run.sh
+
+fmt-update:
+    nix develop --command ./fmt/update.sh
+
+checks-run:
+    nix develop --command ./checks/run.sh
