@@ -19,8 +19,16 @@ inputs: workspace:
 , runtimeEnv ? { }
 , wrapNixGL ? false
 , includeExtraSrc ? workspace.includeExtraSrc
+  # Cargo feature selection applied to the workspace-level `build`, `clippy`,
+  # `test`, `nextest` derivations and to their shared dependency cache. Without
+  # this, those derivations run with default features only — bins gated by
+  # `required-features` are silently skipped, which hides type errors and lints.
+, features ? [ ]
+, noDefaultFeatures ? false
+, allFeatures ? false
 }:
 assert libcPkgs == null || stdenv == null; # only one of those two can be set
+assert !allFeatures || (features == [ ] && !noDefaultFeatures); # `allFeatures` is mutually exclusive with explicit feature selection
 let lib = pkgs.lib; in
 let pkgs' = pkgs; in
 let pkgs = (pkgs'.extend inputs.fenix.overlays.default); in
@@ -90,6 +98,14 @@ let
 
   rustflags = workspace.rustFlags ++ rustFlags
     ++ (lib.optionals buildingForWindows [ "-Ctarget-feature=+crt-static" ]);
+
+  featuresArgs =
+    let
+      parts = lib.optional noDefaultFeatures "--no-default-features"
+        ++ lib.optional allFeatures "--all-features"
+        ++ lib.optional (features != [ ]) ("--features " + lib.concatStringsSep "," features);
+    in
+    lib.concatStringsSep " " parts;
 
   # set of arguments that must be the same for `buildDepsOnly` and `buildPackage`, to prevent full workspace rebuilds in `buildPackage`
   commonArgs =
@@ -169,7 +185,7 @@ let
     inherit dummySrc;
     pname = "workspace";
     version = "0.0.0";
-    cargoExtraArgs = "--locked --all-targets";
+    cargoExtraArgs = lib.strings.trim "--locked --all-targets ${featuresArgs}";
     doCheck = false;
     postUnpack = workspacePostUnpack;
   });
@@ -211,10 +227,12 @@ let
     postUnpack = workspacePostUnpack;
   } // crateEnv;
 
+  workspaceArg = "--workspace" + (if workspace.disableKeepGoing then "" else " --keep-going");
+
   # derivation that runs `cargo build` on the entire workspace
   build = craneLib.cargoBuild (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = "--workspace" + (if workspace.disableKeepGoing then "" else " --keep-going");
+    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs}";
     fixupPhase = ":";
     doCheck = false;
   });
@@ -222,7 +240,7 @@ let
   # derivation that runs `cargo clippy` on the entire workspace
   clippy = craneLib.cargoClippy (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = "--workspace" + (if workspace.disableKeepGoing then "" else " --keep-going");
+    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs}";
     cargoClippyExtraArgs = "--all-targets -- -D warnings";
     fixupPhase = ":";
     doCheck = false;
@@ -231,7 +249,7 @@ let
   # derivation that runs `cargo test` on the entire workspace
   test = craneLib.cargoTest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = "--workspace";
+    cargoExtraArgs = lib.strings.trim "--workspace ${featuresArgs}";
     fixupPhase = ":";
     doCheck = true;
   } // cargoRunnerEmulator);
@@ -239,7 +257,7 @@ let
   # derivation that runs `cargo nextest run` on the entire workspace
   nextest = craneLib.cargoNextest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoNextestExtraArgs = "--workspace --hide-progress-bar";
+    cargoNextestExtraArgs = lib.strings.trim "--workspace --hide-progress-bar ${featuresArgs}";
     fixupPhase = ":";
     doCheck = true;
   } // cargoRunnerEmulator);
