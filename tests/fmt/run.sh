@@ -28,10 +28,8 @@ for clean_file in "$SCRIPT_DIR/clean/"*; do
         echo "${GREEN}PASS${RESET}: $filename"
     else
         echo "${RED}FAIL${RESET}: $filename"
-        echo "  Expected:"
-        head -5 "$clean_file" | sed 's/^/    /'
-        echo "  Got:"
-        head -5 "$temp_file" | sed 's/^/    /'
+        echo "  Diff:"
+        diff -u "$clean_file" "$temp_file" | sed 's/^/    /'
         FAILED=1
     fi
 done

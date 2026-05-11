@@ -2,9 +2,9 @@
 #  for formatter snapshot testing
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
-set dotenv-load := true
-set export := true
-set positional-arguments := true
+set dotenv-load
+set export
+set positional-arguments
 
 # variable assignments
 

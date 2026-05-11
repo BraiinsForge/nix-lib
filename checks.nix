@@ -17,14 +17,14 @@ let
 
   mermaidCheck = pkgs.buildGoModule {
     pname = "mermaid-check";
-    version = "0.0.2";
+    version = "0.0.4";
     src = pkgs.fetchFromGitHub {
       owner = "sammcj";
-      repo = "go-mermaid";
-      rev = "v0.0.2";
-      hash = "sha256-aW6LGKSCK6D6SH6eBre+n4kbdTzb1A6hyWshuil/yo0=";
+      repo = "mermaid-check";
+      rev = "605c28fe6c784c2959ba44ad2560cf43b0cd72f2";
+      hash = "sha256-+AQj7GH8zzEPeZpPxrgsDR94g0PYgTFOB7HHw4/fApw=";
     };
-    vendorHash = null;
+    vendorHash = "sha256-NvqyHH2EHWpIWNupT0V/vboSAuAWhLBBZL1CpwH86z4=";
   };
 
   # Each checker: { name, command, includes }
@@ -36,7 +36,7 @@ let
       includes = [ "*.mermaid" "*.mmd" ];
       # go-mermaid only recognizes .mmd, so we pipe via stdin for .mermaid files
       command = pkgs.writeShellScript "mermaid-check" ''
-        ${mermaidCheck}/bin/go-mermaid < "$1"
+        ${mermaidCheck}/bin/mermaid-check < "$1"
       '';
     }
     {
