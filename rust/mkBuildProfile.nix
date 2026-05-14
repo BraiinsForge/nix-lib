@@ -246,6 +246,28 @@ let
     doCheck = false;
   });
 
+  # derivation that runs `cargo doc` scoped to either the whole workspace
+  # (the default) or a specific `-p <pkg>` selector. `extraArgs` is appended
+  # to the rustdoc invocation, e.g. `--document-private-items`.
+  mkCargoDoc =
+    { package ? null
+    , extraArgs ? ""
+    }:
+    let
+      scopeArg =
+        if package == null
+        then workspaceArg
+        else "--package ${package}";
+    in
+    craneLib.cargoDoc (commonArgs // workspaceCommonArgs // {
+      version = "0.0.0";
+      cargoExtraArgs = lib.strings.trim "${scopeArg} ${featuresArgs}";
+      cargoDocExtraArgs = lib.strings.trim "--no-deps ${extraArgs}";
+      RUSTDOCFLAGS = "-D warnings";
+      fixupPhase = ":";
+      doCheck = false;
+    });
+
   # derivation that runs `cargo test` on the entire workspace
   test = craneLib.cargoTest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
@@ -278,7 +300,7 @@ in
   inherit stdenv;
   deps = commonCargoArtifacts;
   inherit mkShell shell;
-  inherit build clippy test nextest mkCargoDeny;
+  inherit build clippy test nextest mkCargoDeny mkCargoDoc;
   inherit pkgs;
   cc = pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
