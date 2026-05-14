@@ -151,11 +151,21 @@ let
   workspacePath = workspace.workspacePath;
   workspacePrefix = lib.optionalString (workspacePath != "") "${workspacePath}/";
 
+  # Using this and not workspace.src, ensures the
+  # derivations do not get rebuilt on any changes
+  workspaceCargoLock =
+    if workspacePath == "" then null
+    else
+      builtins.path {
+        path = workspace.src + "/${workspacePrefix}Cargo.lock";
+        name = "workspace-cargo-lock";
+      };
+
   dummySrc = craneLib.mkDummySrc ({
     src = workspace.src;
   } // lib.optionalAttrs (workspacePath != "") {
     extraDummyScript = ''
-      cp ${workspace.src}/${workspacePrefix}Cargo.lock $out/${workspacePrefix}Cargo.lock
+      cp ${workspaceCargoLock} $out/${workspacePrefix}Cargo.lock
     '';
   });
 
@@ -167,7 +177,7 @@ let
   cargoVendorDir = craneLib.vendorCargoDeps ({
     src = workspace.src;
   } // lib.optionalAttrs (workspacePath != "") {
-    cargoLock = "${workspace.src}/${workspacePrefix}Cargo.lock";
+    cargoLock = workspaceCargoLock;
   });
 
   ####################################################################
