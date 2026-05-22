@@ -12,6 +12,7 @@ inputs:
 , disableKeepGoing ? false
 , wasm-bindgen-cli ? null
 , includeExtraSrc ? [ ]
+, sccache ? true
 }:
 let
   pkgs = inputs.pkgs;
@@ -97,6 +98,7 @@ in
     inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
     inherit includeExtraSrc;
+    inherit sccache;
     patchSourceInfo = if sourceInfo != null then inputs.patchSourceInfo sourceInfo else x: x;
   };
 

@@ -26,6 +26,7 @@ inputs: workspace:
 , features ? [ ]
 , noDefaultFeatures ? false
 , allFeatures ? false
+, sccache ? workspace.sccache
 }:
 assert libcPkgs == null || stdenv == null; # only one of those two can be set
 assert !allFeatures || (features == [ ] && !noDefaultFeatures); # `allFeatures` is mutually exclusive with explicit feature selection
@@ -146,6 +147,37 @@ let
         libc = libcPkgs.glibc;
         libcxx = libcPkgs.libcxx;
       };
+    }
+    // lib.optionalAttrs sccache {
+      # this only does something if the build machine sets up the redis socket via extra-sandbox-paths
+      RUSTC_WRAPPER = pkgs.pkgsBuildBuild.writeShellScript "rustc-wrapper-sccache" ''
+        sock=/run/redis-sccache/redis.sock
+        if test -S "$sock" && test -w "$sock"; then
+          # Workaround for UDS parsing bug: https://github.com/mozilla/sccache/issues/2214
+          export SCCACHE_REDIS_ENDPOINT="unix://dummy$sock"
+          export SCCACHE_DIR="$TMPDIR/sccache"
+          exec ${lib.getExe pkgs.pkgsBuildBuild.sccache} "$@"
+        else
+          exec "$@"
+        fi
+      '';
+      postPhases = [ "sccacheStatsPhase" ];
+      sccacheStatsPhase = ''
+        sock=/run/redis-sccache/redis.sock
+        if test -S "$sock" && test -w "$sock"; then
+          ${lib.getExe pkgs.pkgsBuildBuild.sccache} --show-stats --stats-format=json | ${lib.getExe pkgs.pkgsBuildBuild.jq} -r '
+            .stats
+            | (.cache_hits.counts.Rust // 0) as $hits
+            | (.cache_misses.counts.Rust // 0) as $misses
+            | if ($hits + $misses) == 0
+              then "no rust compilations recorded by sccache"
+              else "sccache hit rate: \(100 * $hits / ($hits + $misses) * 100 | round / 100)%"
+              end
+          '
+        else
+          echo "sccache not active (no cache backend available)"
+        fi
+      '';
     };
 
   workspacePath = workspace.workspacePath;
