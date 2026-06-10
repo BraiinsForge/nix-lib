@@ -9,7 +9,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter"; # TODO: replace with filesets
     fenix.url = "github:nix-community/fenix";
-    crane.url = "github:ipetkov/crane/v0.20.2";
+    crane.url = "github:ipetkov/crane/v0.23.4";
     docker-spider = {
       url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
       inputs.nixpkgs.follows = "nixpkgs-do-not-override";

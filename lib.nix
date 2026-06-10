@@ -95,17 +95,4 @@ let lib = pkgs.lib; in
       ${docker} manifest push --purge "$TAG"
     '';
 
-  # Creates a stdenv with a custom libc (and libcxx).
-  # Some resources:
-  # - https://github.com/NixOS/nixpkgs/issues/129595
-  # - https://discourse.nixos.org/t/including-an-older-glibc-in-stdenv/29478
-  stdenvCustomLibc = { pkgs, libc, libcxx ? null }: pkgs.overrideCC pkgs.stdenv (pkgs.wrapCCWith {
-    inherit libc libcxx;
-    cc = pkgs.gcc-unwrapped;
-    bintools = pkgs.wrapBintoolsWith {
-      bintools = pkgs.binutils-unwrapped;
-      inherit libc;
-    };
-  });
-
 }
