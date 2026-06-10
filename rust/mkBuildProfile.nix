@@ -51,6 +51,8 @@ let
     ];
   };
 
+  selectedStdenv = stdenvSelector pkgs;
+
   featuresArgs =
     let
       parts = lib.optional noDefaultFeatures "--no-default-features"
@@ -161,9 +163,9 @@ let
     , inputsFrom ? [ ]
     , shellHook ? ""
     , env ? { }
-    }: pkgs.mkShell ((removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
+    }: (pkgs.mkShell.override { stdenv = selectedStdenv; }) ((removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
-      packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
+      packages = [ craneLib.cargo ] ++ packages;
       inherit inputsFrom env;
       shellHook = lib.optionalString (pkgs.stdenv.hostPlatform != pkgs.stdenv.buildPlatform) ''
         if [ -t 1 ]; then
@@ -172,7 +174,7 @@ let
           _bold="" _blue="" _reset=""
         fi
         echo "''${_bold}Entering cross compilation environment...''${_reset}"
-        echo "  - GCC: ''${_blue}$(${pkgs.stdenv.cc.targetPrefix}cc --version | head -n1)''${_reset}"
+        echo "  - GCC: ''${_blue}$(${selectedStdenv.cc.targetPrefix}cc --version | head -n1)''${_reset}"
         echo "  - Rust: ''${_blue}$(rustc --version)''${_reset}"
         echo "  - CARGO_BUILD_TARGET: ''${_blue}$CARGO_BUILD_TARGET''${_reset}"
         echo "  - CARGO_PROFILE: ''${_blue}$CARGO_PROFILE''${_reset}"
@@ -262,12 +264,11 @@ let
     });
 in
 {
-  stdenv = stdenvSelector pkgs;
+  stdenv = selectedStdenv;
   deps = commonCargoArtifacts;
   inherit mkShell shell;
   inherit build clippy test nextest mkCargoDeny mkCargoDoc;
   inherit pkgs;
-  cc = pkgs.stdenv.cc;
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
