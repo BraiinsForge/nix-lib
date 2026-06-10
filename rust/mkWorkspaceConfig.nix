@@ -8,7 +8,6 @@ inputs:
 , nativeDeps ? _: [ ]
 , targetDeps ? _: [ ]
 , disableKeepGoing ? false
-, wasm-bindgen-cli ? null
 , includeExtraSrc ? [ ]
 , sccache ? true
 }:
@@ -93,7 +92,7 @@ in
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
     src = workspace_src;
     inherit workspacePath;
-    inherit env nativeDeps targetDeps disableKeepGoing wasm-bindgen-cli;
+    inherit env nativeDeps targetDeps disableKeepGoing;
     inherit manifestSearch;
     inherit includeExtraSrc;
     inherit sccache;
