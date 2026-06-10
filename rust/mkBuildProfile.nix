@@ -61,25 +61,16 @@ let
 
   # set of arguments that must be the same for `buildDepsOnly` and `buildPackage`, to prevent full workspace rebuilds in `buildPackage`
   commonArgs =
-    let
-      args = {
-        # packages specified in workspace and profile definitions
-        nativeBuildInputs = (workspace.nativeDeps pkgs.pkgsBuildBuild) ++ (nativeDeps pkgs.pkgsBuildBuild);
-        buildInputs = (workspace.targetDeps pkgs) ++ (targetDeps pkgs)
-          ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ pkgs.libiconv ]);
-
-        CARGO_PROFILE = rustProfile;
-
-        strictDeps = true;
-
-        # incremental compilation is always counterproductive in sandbox
-        CARGO_INCREMENTAL = "0";
-      };
-    in
-    args
-    // lib.optionalAttrs (rustCrossTargetOverride != null) { CARGO_BUILD_TARGET = rustCrossTargetOverride; }
+    {
+      nativeBuildInputs = (workspace.nativeDeps pkgs.pkgsBuildBuild) ++ (nativeDeps pkgs.pkgsBuildBuild);
+      buildInputs = (workspace.targetDeps pkgs) ++ (targetDeps pkgs) ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ pkgs.libiconv ]);
+      CARGO_PROFILE = rustProfile;
+      strictDeps = true;
+      CARGO_INCREMENTAL = "0"; # incremental compilation is always counterproductive in sandbox
+    }
     // workspace.env
     // env
+    // lib.optionalAttrs (rustCrossTargetOverride != null) { CARGO_BUILD_TARGET = rustCrossTargetOverride; }
     // lib.optionalAttrs sccache {
       # this only does something if the build machine sets up the redis socket via extra-sandbox-paths
       RUSTC_WRAPPER = pkgs.pkgsBuildBuild.writeShellScript "rustc-wrapper-sccache" ''
@@ -170,7 +161,7 @@ let
     , inputsFrom ? [ ]
     , shellHook ? ""
     , env ? { }
-    }: pkgs.mkShell ((builtins.removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
+    }: pkgs.mkShell ((removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
       packages = [ craneLib.cargo pkgs.stdenv.cc ] ++ packages;
       inherit inputsFrom env;

@@ -27,7 +27,7 @@ let
   # e.g. "examples" -> "..", "a/b" -> "../..", "" -> "."
   srcRootFromWorkspace =
     if workspacePath == "" then "."
-    else lib.concatStringsSep "/" (builtins.map (_: "..") (lib.splitString "/" workspacePath));
+    else lib.concatStringsSep "/" (map (_: "..") (lib.splitString "/" workspacePath));
 
   # When binName is false (e.g. cdylib crates), use packageName for
   # derivation naming and omit --bin from cargo commands.
