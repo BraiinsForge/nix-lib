@@ -5,10 +5,8 @@ inputs:
 , workspacePath ? ""
 , sourceInfo ? null
 , env ? { }
-, rustFlags ? [ ]
 , nativeDeps ? _: [ ]
 , targetDeps ? _: [ ]
-, enableRustFlagsHack ? false
 , disableKeepGoing ? false
 , wasm-bindgen-cli ? null
 , includeExtraSrc ? [ ]
@@ -95,7 +93,7 @@ in
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
     src = workspace_src;
     inherit workspacePath;
-    inherit env rustFlags nativeDeps targetDeps enableRustFlagsHack disableKeepGoing wasm-bindgen-cli;
+    inherit env nativeDeps targetDeps disableKeepGoing wasm-bindgen-cli;
     inherit manifestSearch;
     inherit includeExtraSrc;
     inherit sccache;
