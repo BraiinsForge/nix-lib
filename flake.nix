@@ -10,16 +10,10 @@
     nix-filter.url = "github:numtide/nix-filter"; # TODO: replace with filesets
     fenix.url = "github:nix-community/fenix";
     crane.url = "github:ipetkov/crane/v0.23.4";
-    docker-spider = {
-      url = "git+ssh://git@gitlab.ii.zone/bos/docker-spider";
-      inputs.nixpkgs.follows = "nixpkgs-do-not-override";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.crane.follows = "crane";
-    };
     nix-source-info.url = "git+ssh://git@gitlab.ii.zone/nix/source-info";
   };
 
-  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, docker-spider, nix-filter, nix-source-info, ... }:
+  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, nix-filter, nix-source-info, ... }:
     rec {
       overlays = {
         default = final: prev: {
@@ -37,7 +31,7 @@
         ii = prev.ii // rec {
           rust = import ./rust {
             pkgs = prev;
-            inherit loadRustToolchain crane fenix nix-filter docker-spider;
+            inherit loadRustToolchain crane fenix nix-filter;
             patchSourceInfo = nix-source-info.lib.patchSourceInfo prev;
           };
           rustToolchain = final.lib.warn "`rustToolchain` is deprecated, please use `rust.toolchain` instead" rust.toolchain;

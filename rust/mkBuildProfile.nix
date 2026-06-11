@@ -130,6 +130,33 @@ let
     sourceRoot="$sourceRoot/${workspacePath}"
   '';
 
+  # Transitive closure of local path-deps for a crate dir, including the crate itself.
+  localDepClosure =
+    let
+      # Discard unwanted string context added by `readFile` just because the JSON contains store paths
+      cargoMetadata = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.readFile (pkgs.runCommand "cargo-metadata.json"
+        { nativeBuildInputs = [ craneLib.cargo ]; }
+        ''
+          export CARGO_HOME="$(mktemp -d)"
+          cd ${dummySrc}/${workspacePrefix}
+          cargo metadata --no-deps --format-version 1 --offline >"$out"
+        '')));
+
+      metaRel = abs: lib.removePrefix "/" (lib.removePrefix cargoMetadata.workspace_root abs);
+
+      localDepEdges = lib.listToAttrs (map
+        (pkg: {
+          name = metaRel (dirOf pkg.manifest_path);
+          value = map (d: metaRel d.path) (builtins.filter (d: (d.path or null) != null) pkg.dependencies);
+        })
+        cargoMetadata.packages);
+
+      visit = acc: cur:
+        if builtins.elem cur acc then acc
+        else builtins.foldl' visit (acc ++ [ cur ]) (localDepEdges.${cur} or [ ]);
+    in
+    dir: visit [ ] dir;
+
   # Vendor all Cargo dependencies once per profile.
   cargoVendorDir = craneLib.vendorCargoDeps ({
     src = workspace.src;
@@ -272,6 +299,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
-    inherit includeExtraSrc workspacePostUnpack;
+    inherit includeExtraSrc workspacePostUnpack localDepClosure;
   };
 }

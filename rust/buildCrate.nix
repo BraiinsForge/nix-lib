@@ -18,7 +18,6 @@ let
   lib = pkgs.lib;
   craneLib = profile.craneLib;
   nix-filter = inputs.nix-filter;
-  docker-spider = inputs.docker-spider;
   commonArgs = profile.commonArgs;
 
   workspacePath = workspace.workspacePath;
@@ -74,60 +73,13 @@ let
     doCheck = false;
   });
 
-  # crate path within cargo manifest derivation
-  manifestCratePath = "${workspace.manifestSearch}/${workspacePrefix}${crate_def.relativePath}";
-
-  #######################################################################
-  # docker-spider is not dead, it's now a nix util :D
-  #
-  # In this script, we take the previously generated manifest derivation
-  # and we use docker-spider to calculate the sources for this particular
-  # crate.
-  #
-  # This will produce a `paths.nix` file, which looks like this:
-  #
-  # ```nix
-  # {
-  #    me = "path/to/this/crate/from/repo/root";
-  #    srcs = [
-  #    "list"
-  #    "of"
-  #    "relevant"
-  #    "folders"
-  #    ];
-  # }
-  # ```
-  #
-  # The list also contains self directory stupidly as `./`, so the bash
-  # script that formats docker-spider output into nix fixes this.
-  #######################################################################
-  calculateSrc = pkgs.runCommand "${effectiveName}-srcpaths" { } ''
-    cd ${manifestCratePath}
-    mkdir $out
-    gen_sources () {
-        curr_dir="$(pwd)"
-        crate_dir="$(dirname $1)/"
-        echo "{ me = \"$crate_dir\"; srcs = [" >> $out/paths.tmp
-        ${docker-spider.outputs.packages.${pkgs.stdenv.buildPlatform.system}.default}/bin/docker-spider p --list $1 | awk -- '{print "\"" $0 "\"";}' >> $out/paths.tmp
-        echo "\"$crate_dir\"" >> $out/paths.tmp
-        echo "]; }" >> $out/paths.tmp
-        to_replace="$(echo $(pwd) | grep -Eo '/nix/store/[A-Za-z0-9_-]+/')"
-        sed -i "s|$to_replace||g" $out/paths.tmp
-        self=$(echo $(pwd) | sed  "s|$to_replace||")
-        sed -i "s|\./|$self|" $out/paths.tmp
-        cat $out/paths.tmp > $out/paths.nix
-        rm $out/paths.tmp
-        cat $out/paths.nix | ${pkgs.pkgsBuildBuild.nixpkgs-fmt}/bin/nixpkgs-fmt
-    }
-    gen_sources ./Cargo.toml
-  '';
-  finalSrc = import "${calculateSrc}/paths.nix";
+  localDirs = map (d: "${workspacePrefix}${d}") (profile.localDepClosure crate_def.relativePath);
 
   cargoFiles = [ "${workspacePrefix}Cargo.toml" "${workspacePrefix}Cargo.lock" ];
 
   filteredSrc = nix-filter.lib.filter {
     root = workspace.src;
-    include = finalSrc.srcs ++ [ ".cargo" ] ++ cargoFiles ++ includeExtraSrc;
+    include = localDirs ++ [ ".cargo" ] ++ cargoFiles ++ includeExtraSrc;
   };
 
   #######################################################################
@@ -154,9 +106,10 @@ let
     cargoLock = "${profile.dummySrc}/${workspacePrefix}Cargo.lock";
     src = filteredSrc;
     postUnpack = profile.workspacePostUnpack;
+    # re-add, as stubs, the unrelated crates filtered out of filteredSrc, otherwise cargo fails
     preBuild = ''
       mkdir -p target
-      cp -r --no-clobber ${workspace.manifestSearch}/* ${srcRootFromWorkspace}/ 2>/dev/null || true
+      cp -r --no-clobber ${profile.dummySrc}/* ${srcRootFromWorkspace}/ 2>/dev/null || true
     '';
     inherit cargoArtifacts;
   };
