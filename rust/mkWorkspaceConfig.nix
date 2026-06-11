@@ -13,16 +13,9 @@ inputs:
 , includeExtraSrc ? [ ]
 , sccache ? true
 }:
-let
-  workspace_src = builtins.path { path = src; name = "workspace-src"; };
-in
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    src = workspace_src;
-    inherit workspacePath;
-    inherit env nativeDeps targetDeps disableKeepGoing;
-    inherit includeExtraSrc;
-    inherit sccache;
+    inherit src workspacePath env nativeDeps targetDeps disableKeepGoing includeExtraSrc sccache;
     patchSourceInfo = if sourceInfo != null then inputs.patchSourceInfo sourceInfo else x: x;
   };
 }

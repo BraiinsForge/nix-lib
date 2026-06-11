@@ -16,8 +16,8 @@ let
   crate = { inherit minimalDeps denix upx env features noDefaultFeatures; };
   pkgs = profile.pkgs;
   lib = pkgs.lib;
+  fs = lib.fileset;
   craneLib = profile.craneLib;
-  nix-filter = inputs.nix-filter;
   commonArgs = profile.commonArgs;
 
   workspacePath = workspace.workspacePath;
@@ -73,13 +73,16 @@ let
     doCheck = false;
   });
 
-  localDirs = map (d: "${workspacePrefix}${d}") (profile.localDepClosure crate_def.relativePath);
-
-  cargoFiles = [ "${workspacePrefix}Cargo.toml" "${workspacePrefix}Cargo.lock" ];
-
-  filteredSrc = nix-filter.lib.filter {
+  # crane-default filter (rust/toml/lock) + each crate's `[package.metadata.nix].include`,
+  # over this crate's local-dep closure. The fileset is built in the profile so the
+  # workspace-level derivations (build/clippy/test) share the exact same per-crate logic.
+  crateFileset = profile.mkCrateFileset {
+    dirs = profile.localDepClosure crate_def.relativePath;
+    inherit includeExtraSrc;
+  };
+  filteredSrc = fs.toSource {
     root = workspace.src;
-    include = localDirs ++ [ ".cargo" ] ++ cargoFiles ++ includeExtraSrc;
+    fileset = crateFileset;
   };
 
   #######################################################################
@@ -112,6 +115,8 @@ let
       cp -r --no-clobber ${profile.dummySrc}/* ${srcRootFromWorkspace}/ 2>/dev/null || true
     '';
     inherit cargoArtifacts;
+    # the resolved source file list, attached for debugging: nix eval --json .#<drv>.passthru.srcFiles
+    passthru.srcFiles = profile.srcFileList crateFileset;
   };
 
 

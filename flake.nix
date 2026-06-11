@@ -7,13 +7,14 @@
     nixpkgs-do-not-override.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     flake-utils.url = "github:numtide/flake-utils";
-    nix-filter.url = "github:numtide/nix-filter"; # TODO: replace with filesets
     fenix.url = "github:nix-community/fenix";
     crane.url = "github:ipetkov/crane/v0.23.4";
+    globset.url = "github:pdtpartners/globset";
+    globset.inputs.nixpkgs-lib.follows = "nixpkgs-do-not-override";
     nix-source-info.url = "git+ssh://git@gitlab.ii.zone/nix/source-info";
   };
 
-  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, nix-filter, nix-source-info, ... }:
+  outputs = { self, nixpkgs-do-not-override, flake-utils, crane, fenix, globset, nix-source-info, ... }:
     rec {
       overlays = {
         default = final: prev: {
@@ -31,7 +32,7 @@
         ii = prev.ii // rec {
           rust = import ./rust {
             pkgs = prev;
-            inherit loadRustToolchain crane fenix nix-filter;
+            inherit loadRustToolchain crane fenix globset;
             patchSourceInfo = nix-source-info.lib.patchSourceInfo prev;
           };
           rustToolchain = final.lib.warn "`rustToolchain` is deprecated, please use `rust.toolchain` instead" rust.toolchain;

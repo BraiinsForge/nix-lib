@@ -32,6 +32,9 @@ let lib = pkgs.lib; in
 let pkgs' = pkgs; in
 let pkgs = (pkgs'.extend inputs.fenix.overlays.default); in
 let
+  fs = lib.fileset;
+  globset = inputs.globset.lib;
+
   mkCraneLib = { pkgs, loadRustToolchain, registries ? _: [ ], stdenvSelector ? (p: p.stdenv) }:
     let
       craneLib1 = inputs.crane.mkLib pkgs;
@@ -130,32 +133,81 @@ let
     sourceRoot="$sourceRoot/${workspacePath}"
   '';
 
-  # Transitive closure of local path-deps for a crate dir, including the crate itself.
+  # `cargo metadata` extracted from the crane dummy src
+  cargoMetadata = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.readFile (pkgs.runCommand "cargo-metadata.json"
+    { nativeBuildInputs = [ craneLib.cargo ]; }
+    ''
+      export CARGO_HOME="$(mktemp -d)"
+      cd ${dummySrc}/${workspacePrefix}
+      cargo metadata --no-deps --format-version 1 --offline >"$out"
+    '')));
+
+  # crate dir (relative to the cargo workspace root) -> its direct local path-dep dirs
+  metaRel = abs: lib.removePrefix "/" (lib.removePrefix cargoMetadata.workspace_root abs);
+  localDepEdges = lib.listToAttrs (map
+    (pkg: {
+      name = metaRel (dirOf pkg.manifest_path);
+      value = map (d: metaRel d.path) (builtins.filter (d: (d.path or null) != null) pkg.dependencies);
+    })
+    cargoMetadata.packages);
+
+  # all workspace members (dirs relative to the cargo workspace root)
+  workspaceMemberDirs = builtins.attrNames localDepEdges;
+
+  # transitive closure of local path-deps for a crate dir, including the crate itself
   localDepClosure =
     let
-      # Discard unwanted string context added by `readFile` just because the JSON contains store paths
-      cargoMetadata = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.readFile (pkgs.runCommand "cargo-metadata.json"
-        { nativeBuildInputs = [ craneLib.cargo ]; }
-        ''
-          export CARGO_HOME="$(mktemp -d)"
-          cd ${dummySrc}/${workspacePrefix}
-          cargo metadata --no-deps --format-version 1 --offline >"$out"
-        '')));
-
-      metaRel = abs: lib.removePrefix "/" (lib.removePrefix cargoMetadata.workspace_root abs);
-
-      localDepEdges = lib.listToAttrs (map
-        (pkg: {
-          name = metaRel (dirOf pkg.manifest_path);
-          value = map (d: metaRel d.path) (builtins.filter (d: (d.path or null) != null) pkg.dependencies);
-        })
-        cargoMetadata.packages);
-
       visit = acc: cur:
         if builtins.elem cur acc then acc
         else builtins.foldl' visit (acc ++ [ cur ]) (localDepEdges.${cur} or [ ]);
     in
     dir: visit [ ] dir;
+
+  # absolute path of the cargo workspace root within the source tree
+  workspaceRootPath = workspace.src + (lib.optionalString (workspacePath != "") "/${workspacePath}");
+
+  # absolute path of a crate dir (relative to the cargo workspace root) within the source tree
+  crateDir = relDir: workspaceRootPath + "/${relDir}";
+
+  # extra files a crate opts into via `[package.metadata.nix] include = [ ... ]`
+  crateIncludeFileset = relDir:
+    let manifest = fromTOML (builtins.readFile (crateDir relDir + "/Cargo.toml"));
+    in globset.globs (crateDir relDir)
+      (map builtins.unsafeDiscardStringContext (manifest.package.metadata.nix.include or [ ]));
+
+  # fileset for one crate: crane's default rust/toml/lock filter + its declared `include` globs
+  crateFileset = relDir:
+    fs.unions [
+      (craneLib.fileset.commonCargoSources (crateDir relDir))
+      (crateIncludeFileset relDir)
+    ];
+
+  # profile-level `includeExtraSrc` paths, verbatim, each tolerant of being absent
+  extraSrc = map (p: fs.maybeMissing (workspace.src + "/${p}"));
+
+  # Fileset for a crate + its local-dep closure: each crate's fileset, plus the workspace
+  # cargo manifests, the root cargo config, and the profile-level `includeExtraSrc`.
+  mkCrateFileset = { dirs, includeExtraSrc }:
+    fs.unions (
+      (map crateFileset dirs)
+      ++ [
+        (fs.maybeMissing (workspaceRootPath + "/.cargo/config.toml"))
+        (fs.maybeMissing (workspaceRootPath + "/Cargo.toml"))
+        (fs.maybeMissing (workspaceRootPath + "/Cargo.lock"))
+      ]
+      ++ extraSrc includeExtraSrc
+    );
+
+  # fileset for whole-workspace derivations
+  workspaceFileset = fs.unions (
+    [ (craneLib.fileset.commonCargoSources workspaceRootPath) ]
+    ++ map crateIncludeFileset workspaceMemberDirs
+    ++ extraSrc includeExtraSrc
+  );
+
+  # the exact file list a fileset resolves to, as paths relative to the source root
+  srcFileList = fileset:
+    map (p: lib.removePrefix "${toString workspace.src}/" (toString p)) (fs.toList fileset);
 
   # Vendor all Cargo dependencies once per profile.
   cargoVendorDir = craneLib.vendorCargoDeps ({
@@ -211,14 +263,17 @@ let
   shell = mkShell { };
 
   workspaceCommonArgs = {
-    # # TODO: clean source, but include assets
-    # src = craneLib.cleanCargoSource workspace.src;
     inherit cargoVendorDir;
-    src = workspace.src;
+    src = fs.toSource {
+      root = workspace.src;
+      fileset = workspaceFileset;
+    };
     pname = "workspace";
     cargoArtifacts = commonCargoArtifacts;
     doInstallCargoArtifacts = false;
     postUnpack = workspacePostUnpack;
+    # the resolved source file list, attached for debugging: nix eval --json .#<drv>.passthru.srcFiles
+    passthru.srcFiles = srcFileList workspaceFileset;
   } // crateEnv;
 
   workspaceArg = "--workspace" + (if workspace.disableKeepGoing then "" else " --keep-going");
@@ -299,6 +354,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
-    inherit includeExtraSrc workspacePostUnpack localDepClosure;
+    inherit includeExtraSrc workspacePostUnpack localDepClosure mkCrateFileset srcFileList;
   };
 }
