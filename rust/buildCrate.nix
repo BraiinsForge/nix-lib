@@ -62,6 +62,7 @@ let
       binArg
       (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
       featuresArgs
+      profile.timingsArg
     ];
     cargoArtifacts = profile.commonCargoArtifacts;
     pname = effectiveName;
@@ -134,6 +135,7 @@ let
         binArg
         (if hasBinTarget && crate.minimalDeps then "--package ${crate_def.packageName}" else "")
         featuresArgs
+        profile.timingsArg
       ];
       doCheck = false;
       # strip is controlled directly by cargo profile

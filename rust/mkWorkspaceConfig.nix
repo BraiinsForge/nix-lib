@@ -12,10 +12,11 @@ inputs:
 , disableKeepGoing ? false
 , includeExtraSrc ? [ ]
 , sccache ? true
+, timings ? true
 }:
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    inherit src workspacePath env nativeDeps targetDeps disableKeepGoing includeExtraSrc sccache;
+    inherit src workspacePath env nativeDeps targetDeps disableKeepGoing includeExtraSrc sccache timings;
     patchSourceInfo = if sourceInfo != null then inputs.patchSourceInfo sourceInfo else x: x;
   };
 }

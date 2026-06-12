@@ -26,6 +26,7 @@ inputs: workspace:
 , noDefaultFeatures ? false
 , allFeatures ? false
 , sccache ? workspace.sccache
+, timings ? workspace.timings
 }:
 assert !allFeatures || (features == [ ] && !noDefaultFeatures); # `allFeatures` is mutually exclusive with explicit feature selection
 let lib = pkgs.lib; in
@@ -64,6 +65,16 @@ let
     in
     lib.concatStringsSep " " parts;
 
+  timingsArg = lib.optionalString timings "--timings";
+
+  preserveTimings = nameSuffix: ''
+    targetDir="''${CARGO_TARGET_DIR:-target}"
+    if test -f "$targetDir/cargo-timings/cargo-timing.html"; then
+      mkdir -p "$targetDir/nix-cargo-timings"
+      mv "$targetDir/cargo-timings/cargo-timing.html" "$targetDir/nix-cargo-timings/cargo-timing-$pname${nameSuffix}.html"
+    fi
+  '';
+
   # set of arguments that must be the same for `buildDepsOnly` and `buildPackage`, to prevent full workspace rebuilds in `buildPackage`
   commonArgs =
     {
@@ -72,10 +83,21 @@ let
       CARGO_PROFILE = rustProfile;
       strictDeps = true;
       CARGO_INCREMENTAL = "0"; # incremental compilation is always counterproductive in sandbox
+      postPhases = lib.optional timings "timingsInstallPhase" ++ lib.optional sccache "sccacheStatsPhase";
     }
     // workspace.env
     // env
     // lib.optionalAttrs (rustCrossTargetOverride != null) { CARGO_BUILD_TARGET = rustCrossTargetOverride; }
+    // lib.optionalAttrs timings {
+      preInstallPhases = [ "timingsPreservePhase" ];
+      timingsPreservePhase = preserveTimings "";
+      timingsInstallPhase = ''
+        chartsDir="''${CARGO_TARGET_DIR:-target}/nix-cargo-timings"
+        if test "''${doInstallCargoArtifacts:-}" != 1 && test -d "$chartsDir"; then
+          cp -r "$chartsDir" "$out/cargo-timings"
+        fi
+      '';
+    }
     // lib.optionalAttrs sccache {
       # this only does something if the build machine sets up the redis socket via extra-sandbox-paths
       RUSTC_WRAPPER = pkgs.pkgsBuildBuild.writeShellScript "rustc-wrapper-sccache" ''
@@ -89,7 +111,6 @@ let
           exec "$@"
         fi
       '';
-      postPhases = [ "sccacheStatsPhase" ];
       sccacheStatsPhase = ''
         sock=/run/redis-sccache/redis.sock
         if test -S "$sock" && test -w "$sock"; then
@@ -226,14 +247,24 @@ let
   # transplant the target/ folder into the actual build of the crate,
   # saving a lot of time.
   ####################################################################
+  depsCargoExtraArgs = lib.strings.trim "--locked --all-targets ${featuresArgs}";
   commonCargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
     inherit cargoVendorDir;
     inherit dummySrc;
     pname = "workspace";
     version = "0.0.0";
-    cargoExtraArgs = lib.strings.trim "--locked --all-targets ${featuresArgs}";
+    cargoExtraArgs = depsCargoExtraArgs;
     doCheck = false;
     postUnpack = workspacePostUnpack;
+  } // lib.optionalAttrs timings {
+    # replicates crane's default `cargo check` + `cargo build` sequence, preserving
+    # timing in between so the check pass gets its own timing chart instead
+    # of being overwritten by the build pass
+    buildPhaseCargoCommand = ''
+      cargoWithProfile check ${depsCargoExtraArgs} ${timingsArg}
+      ${preserveTimings "-check"}
+      cargoWithProfile build ${depsCargoExtraArgs} ${timingsArg}
+    '';
   });
 
   mkShell =
@@ -281,7 +312,7 @@ let
   # derivation that runs `cargo build` on the entire workspace
   build = craneLib.cargoBuild (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs}";
+    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs} ${timingsArg}";
     fixupPhase = ":";
     doCheck = false;
   });
@@ -289,7 +320,7 @@ let
   # derivation that runs `cargo clippy` on the entire workspace
   clippy = craneLib.cargoClippy (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs}";
+    cargoExtraArgs = lib.strings.trim "${workspaceArg} ${featuresArgs} ${timingsArg}";
     cargoClippyExtraArgs = "--all-targets -- -D warnings";
     fixupPhase = ":";
     doCheck = false;
@@ -310,7 +341,7 @@ let
     in
     craneLib.cargoDoc (commonArgs // workspaceCommonArgs // {
       version = "0.0.0";
-      cargoExtraArgs = lib.strings.trim "${scopeArg} ${featuresArgs}";
+      cargoExtraArgs = lib.strings.trim "${scopeArg} ${featuresArgs} ${timingsArg}";
       cargoDocExtraArgs = lib.strings.trim "--no-deps ${extraArgs}";
       RUSTDOCFLAGS = "-D warnings";
       fixupPhase = ":";
@@ -320,7 +351,7 @@ let
   # derivation that runs `cargo test` on the entire workspace
   test = craneLib.cargoTest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
-    cargoExtraArgs = lib.strings.trim "--workspace ${featuresArgs}";
+    cargoExtraArgs = lib.strings.trim "--workspace ${featuresArgs} ${timingsArg}";
     fixupPhase = ":";
     doCheck = true;
   });
@@ -328,6 +359,7 @@ let
   # derivation that runs `cargo nextest run` on the entire workspace
   nextest = craneLib.cargoNextest (commonArgs // workspaceCommonArgs // {
     version = "0.0.0";
+    cargoExtraArgs = timingsArg;
     cargoNextestExtraArgs = lib.strings.trim "--workspace --hide-progress-bar ${featuresArgs}";
     fixupPhase = ":";
     doCheck = true;
@@ -354,6 +386,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
-    inherit includeExtraSrc workspacePostUnpack localDepClosure mkCrateFileset srcFileList;
+    inherit includeExtraSrc workspacePostUnpack localDepClosure mkCrateFileset srcFileList timingsArg;
   };
 }
