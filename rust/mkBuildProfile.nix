@@ -2,8 +2,7 @@
 inputs: workspace:
 # this fn's args
 { pkgs ? inputs.pkgs
-  # https://crane.dev/API.html#cranelibstdenvselector
-, stdenvSelector ? (p: p.stdenv)
+, stdenvSelector ? workspace.stdenvSelector
 , loadRustToolchain ? inputs.loadRustToolchain
 , rustCrossTargetOverride ? null
 , rustProfile ? "dev"

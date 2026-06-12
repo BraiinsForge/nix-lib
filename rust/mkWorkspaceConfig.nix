@@ -9,6 +9,8 @@ inputs:
 , env ? { }
 , nativeDeps ? _: [ ]
 , targetDeps ? _: [ ]
+  # https://crane.dev/API.html#cranelibstdenvselector
+, stdenvSelector ? (p: p.stdenv)
 , disableKeepGoing ? false
 , includeExtraSrc ? [ ]
 , sccache ? true
@@ -16,7 +18,7 @@ inputs:
 }:
 {
   mkBuildProfile = import ./mkBuildProfile.nix inputs {
-    inherit src workspacePath env nativeDeps targetDeps disableKeepGoing includeExtraSrc sccache timings;
+    inherit src workspacePath env nativeDeps targetDeps stdenvSelector disableKeepGoing includeExtraSrc sccache timings;
     patchSourceInfo = if sourceInfo != null then inputs.patchSourceInfo sourceInfo else x: x;
   };
 }
