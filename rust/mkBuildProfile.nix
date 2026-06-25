@@ -153,29 +153,59 @@ let
     sourceRoot="$sourceRoot/${workspacePath}"
   '';
 
-  # `cargo metadata` extracted from the crane dummy src
+  # `cargo metadata` extracted from the crane dummy src.
+  #
+  # The top-level workspace has no path-deps outside its own root, so `--no-deps`
+  # (which lists only the active workspace's members) suffices and keeps this
+  # derivation independent of the vendored deps.
+  #
+  # A *nested* workspace, however, can have members that path-depend on crates
+  # outside it; `--no-deps` reports those as dependency edges but never as
+  # packages, so their own path-deps stay invisible and the closure dead-ends.
+  # There the full resolve is required. It must see every dependency, so the
+  # vendored registry config is layered into CARGO_HOME and cargo runs
+  # `--offline` — no network fetch (the vendored set is the one the build already
+  # uses), and registry packages are dropped below, so this only affects which
+  # *local* crate dirs are discovered, never what gets fetched.
   cargoMetadata = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.readFile (pkgs.runCommand "cargo-metadata.json"
     { nativeBuildInputs = [ craneLib.cargo ]; }
-    ''
+    (if workspacePath == "" then ''
       export CARGO_HOME="$(mktemp -d)"
-      cd ${dummySrc}/${workspacePrefix}
+      cd ${dummySrc}
       cargo metadata --no-deps --format-version 1 --offline >"$out"
-    '')));
+    '' else ''
+      export CARGO_HOME="$(mktemp -d)"
+      cat ${cargoVendorDir}/config.toml >"$CARGO_HOME/config.toml"
+      cd ${dummySrc}/${workspacePrefix}
+      cargo metadata --format-version 1 --offline >"$out"
+    ''))));
 
-  # crate dir (relative to the cargo workspace root) -> its direct local path-dep dirs
-  metaRel = abs: lib.removePrefix "/" (lib.removePrefix cargoMetadata.workspace_root abs);
+  # cargo reports the *active* (possibly nested) workspace as `workspace_root`;
+  # rebase onto the real source root so crate dirs are expressed relative to it
+  # and external (`../`) path-deps resolve instead of producing broken paths.
+  srcRoot =
+    if workspacePath == "" then cargoMetadata.workspace_root
+    else lib.removeSuffix "/${workspacePath}" cargoMetadata.workspace_root;
+
+  # crate dir (relative to the source root) -> its direct local path-dep dirs.
+  # Registry packages carry a non-null `source` and manifest paths outside the
+  # tree, so only local (path/workspace) packages contribute edges.
+  metaRel = abs: lib.removePrefix "/" (lib.removePrefix srcRoot abs);
   localDepEdges = lib.listToAttrs (map
     (pkg: {
       name = metaRel (dirOf pkg.manifest_path);
       value = map (d: metaRel d.path) (builtins.filter (d: (d.path or null) != null) pkg.dependencies);
     })
-    cargoMetadata.packages);
+    (builtins.filter (p: p.source == null) cargoMetadata.packages));
 
-  # all workspace members (dirs relative to the cargo workspace root)
-  workspaceMemberDirs = builtins.attrNames localDepEdges;
+  # every local crate dir in the resolve (active-workspace members plus their
+  # external path-deps), split by whether it lives under the active workspace
+  allLocalDirs = builtins.attrNames localDepEdges;
+  workspaceMemberDirs = builtins.filter (d: lib.hasPrefix workspacePrefix d) allLocalDirs;
+  externalDirs = builtins.filter (d: !(lib.hasPrefix workspacePrefix d)) allLocalDirs;
 
-  # transitive closure of local path-deps for a crate dir, including the crate itself
-  localDepClosure =
+  # transitive closure of local path-deps for a source-root-relative crate dir
+  closureFrom =
     let
       visit = acc: cur:
         if builtins.elem cur acc then acc
@@ -183,11 +213,24 @@ let
     in
     dir: visit [ ] dir;
 
-  # absolute path of the cargo workspace root within the source tree
+  # `dir` is given relative to the active cargo workspace (matching
+  # `defineCrate`'s `path`); resolve it against the source root before walking.
+  localDepClosure = dir: closureFrom (workspacePrefix + dir);
+
+  # absolute path of the active cargo workspace root within the source tree
   workspaceRootPath = workspace.src + (lib.optionalString (workspacePath != "") "/${workspacePath}");
 
-  # absolute path of a crate dir (relative to the cargo workspace root) within the source tree
-  crateDir = relDir: workspaceRootPath + "/${relDir}";
+  # absolute path of a source-root-relative crate dir within the source tree
+  crateDir = relDir: workspace.src + "/${relDir}";
+
+  # cargo files of the real source root, needed (in addition to the active
+  # workspace's own) when external path-deps inherit `workspace = true` settings
+  # from a workspace above a nested one.
+  rootCargoFiles = [
+    (fs.maybeMissing (workspace.src + "/.cargo/config.toml"))
+    (fs.maybeMissing (workspace.src + "/Cargo.toml"))
+    (fs.maybeMissing (workspace.src + "/Cargo.lock"))
+  ];
 
   # extra files a crate opts into via `[package.metadata.nix] include = [ ... ]`
   crateIncludeFileset = relDir:
@@ -215,13 +258,17 @@ let
         (fs.maybeMissing (workspaceRootPath + "/Cargo.toml"))
         (fs.maybeMissing (workspaceRootPath + "/Cargo.lock"))
       ]
+      ++ rootCargoFiles
       ++ extraSrc includeExtraSrc
     );
 
-  # fileset for whole-workspace derivations
+  # fileset for whole-workspace derivations: the active workspace's own sources
+  # and member includes, plus external path-dep sources and the root manifests.
   workspaceFileset = fs.unions (
     [ (craneLib.fileset.commonCargoSources workspaceRootPath) ]
     ++ map crateIncludeFileset workspaceMemberDirs
+    ++ map crateFileset externalDirs
+    ++ rootCargoFiles
     ++ extraSrc includeExtraSrc
   );
 
