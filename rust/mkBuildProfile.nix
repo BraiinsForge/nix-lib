@@ -339,17 +339,27 @@ let
     '';
   });
 
+  # These vars are not set by Crane automatically outside its own derivations.
+  # We set them by hand instead of reusing `craneLib.mkCrossToolchainEnv`
+  # because that would also set `CARGO_TARGET_*_RUNNER` which we don't want,
+  # because bos-main already has some mechanism for running the binaries on
+  # miners directly.
+  crossToolchainEnv = lib.optionalAttrs (selectedStdenv.buildPlatform != selectedStdenv.hostPlatform) {
+    "CARGO_BUILD_TARGET" = selectedStdenv.hostPlatform.rust.rustcTarget;
+    "CARGO_TARGET_${selectedStdenv.hostPlatform.rust.cargoEnvVarTarget}_LINKER" = "${selectedStdenv.cc}/bin/${selectedStdenv.cc.targetPrefix}cc";
+  };
+
   mkShell =
     { name ? "build-env"
     , packages ? [ ]
     , inputsFrom ? [ ]
     , shellHook ? ""
     , env ? { }
-    }: (pkgs.mkShell.override { stdenv = selectedStdenv; }) ((removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
+    }: (pkgs.mkShell.override { stdenv = selectedStdenv; }) (crossToolchainEnv // (removeAttrs commonArgs [ "CARGO_INCREMENTAL" ]) // {
       inherit name;
       packages = [ craneLib.cargo ] ++ packages;
       inherit inputsFrom env;
-      shellHook = lib.optionalString (pkgs.stdenv.hostPlatform != pkgs.stdenv.buildPlatform) ''
+      shellHook = lib.optionalString (selectedStdenv.hostPlatform != selectedStdenv.buildPlatform) ''
         if [ -t 1 ]; then
           _bold=$'\e[1m' _blue=$'\e[34m' _reset=$'\e[0m'
         else
