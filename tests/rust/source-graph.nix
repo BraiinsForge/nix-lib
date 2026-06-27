@@ -35,6 +35,8 @@ assert assertMsg "default source should include root Cargo.toml"
   (has "Cargo.toml" workspaceFiles);
 assert assertMsg "default source should include package metadata includes"
   (has "member/extra.txt" workspaceFiles);
+assert assertMsg "default source should include workspace metadata includes"
+  (has "workspace-extra.txt" workspaceFiles);
 assert assertMsg "default source should ignore standalone nested Cargo.toml"
   (!has "nested-workspace/Cargo.toml" workspaceFiles);
 assert assertMsg "default source should ignore standalone nested Cargo.lock"

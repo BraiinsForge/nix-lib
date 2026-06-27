@@ -238,6 +238,12 @@ let
   # from a workspace above a nested one.
   rootCargoFiles = mkWorkspaceCargoFiles workspace.src;
 
+  # extra files the active workspace opts into via `[workspace.metadata.nix] include = [ ... ]`
+  workspaceIncludeFileset =
+    let manifest = fromTOML (builtins.readFile (workspaceRootPath + "/Cargo.toml"));
+    in globset.globs workspaceRootPath
+      (map builtins.unsafeDiscardStringContext (manifest.workspace.metadata.nix.include or [ ]));
+
   # extra files a crate opts into via `[package.metadata.nix] include = [ ... ]`
   crateIncludeFileset = relDir:
     let manifest = fromTOML (builtins.readFile (crateDir relDir + "/Cargo.toml"));
@@ -267,10 +273,11 @@ let
 
   # Cargo-metadata-scoped source graph for whole-workspace derivations and
   # dependency-cache inputs. Standalone nested workspaces under the source root
-  # are not included unless Cargo reports them as local packages or a crate
-  # opts files in via `[package.metadata.nix] include`.
+  # are not included unless Cargo reports them as local packages or a crate or
+  # workspace opts files in via `[*.metadata.nix] include`.
   graphFileset = fs.unions (
     workspaceCargoFiles
+    ++ [ workspaceIncludeFileset ]
     ++ map crateFileset allLocalDirs
     ++ rootCargoFiles
     ++ extraSrc includeExtraSrc
