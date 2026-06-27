@@ -244,10 +244,11 @@ let
     in globset.globs (crateDir relDir)
       (map builtins.unsafeDiscardStringContext (manifest.package.metadata.nix.include or [ ]));
 
-  # fileset for one crate: crane's default rust/toml/lock filter + its declared `include` globs
+  # fileset for one crate: Cargo.toml, lock and rust sources + its declared `include` globs
   crateFileset = relDir:
     fs.unions [
-      (craneLib.fileset.commonCargoSources (crateDir relDir))
+      (craneLib.fileset.cargoTomlAndLock (crateDir relDir))
+      (craneLib.fileset.rust (crateDir relDir))
       (crateIncludeFileset relDir)
     ];
 
