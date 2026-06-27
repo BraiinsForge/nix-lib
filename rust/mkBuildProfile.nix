@@ -16,7 +16,6 @@ inputs: workspace:
 , runtimeDeps ? [ ]
 , runtimeEnv ? { }
 , wrapNixGL ? false
-, includeExtraSrc ? workspace.includeExtraSrc
   # Cargo feature selection applied to the workspace-level `build`, `clippy`,
   # `test`, `nextest` derivations and to their shared dependency cache. Without
   # this, those derivations run with default features only — bins gated by
@@ -258,17 +257,13 @@ let
       (crateIncludeFileset relDir)
     ];
 
-  # profile-level `includeExtraSrc` paths, verbatim, each tolerant of being absent
-  extraSrc = map (p: fs.maybeMissing (workspace.src + "/${p}"));
-
   # Fileset for a crate + its local-dep closure: each crate's fileset, plus the workspace
-  # cargo manifests, the root cargo config, and the profile-level `includeExtraSrc`.
-  mkCrateFileset = { dirs, includeExtraSrc }:
+  # cargo manifests and root cargo config.
+  mkCrateFileset = { dirs }:
     fs.unions (
       (map crateFileset dirs)
       ++ workspaceCargoFiles
       ++ rootCargoFiles
-      ++ extraSrc includeExtraSrc
     );
 
   # Cargo-metadata-scoped source graph for whole-workspace derivations and
@@ -280,7 +275,6 @@ let
     ++ [ workspaceIncludeFileset ]
     ++ map crateFileset allLocalDirs
     ++ rootCargoFiles
-    ++ extraSrc includeExtraSrc
   );
 
   workspaceFileset = graphFileset;
@@ -464,6 +458,6 @@ in
   buildCrate = import ./buildCrate.nix inputs workspace {
     inherit pkgs craneLib rustProfile minimalDeps denix upx env crateEnv nativeDeps targetDeps runtimeDeps runtimeEnv wrapNixGL;
     inherit commonArgs commonCargoArtifacts cargoVendorDir dummySrc;
-    inherit includeExtraSrc workspacePostUnpack localDepClosure mkCrateFileset srcFileList timingsArg;
+    inherit workspacePostUnpack localDepClosure mkCrateFileset srcFileList timingsArg;
   };
 }

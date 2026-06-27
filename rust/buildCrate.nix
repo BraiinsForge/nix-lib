@@ -10,7 +10,6 @@ crate_def: { minimalDeps ? profile.minimalDeps
            , runtimeDeps ? profile.runtimeDeps
            , runtimeEnv ? profile.runtimeEnv
            , wrapNixGL ? profile.wrapNixGL
-           , includeExtraSrc ? profile.includeExtraSrc
            }:
 let
   crate = { inherit minimalDeps denix upx env features noDefaultFeatures; };
@@ -79,7 +78,6 @@ let
   # workspace-level derivations (build/clippy/test) share the exact same per-crate logic.
   crateFileset = profile.mkCrateFileset {
     dirs = profile.localDepClosure crate_def.relativePath;
-    inherit includeExtraSrc;
   };
   filteredSrc = fs.toSource {
     root = workspace.src;
