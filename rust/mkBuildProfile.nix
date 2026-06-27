@@ -141,8 +141,12 @@ let
         name = "workspace-cargo-lock";
       };
 
-  dummySrc = craneLib.mkDummySrc ({
-    src = workspace.src;
+  # Bootstrap source for cargo metadata discovery. This is intentionally broad
+  # enough for Cargo to parse the workspace before we know the local crate graph.
+  metadataScopedSrc = workspace.src;
+
+  metadataDummySrc = craneLib.mkDummySrc ({
+    src = metadataScopedSrc;
   } // lib.optionalAttrs (workspacePath != "") {
     extraDummyScript = ''
       cp ${workspaceCargoLock} $out/${workspacePrefix}Cargo.lock
@@ -171,12 +175,12 @@ let
     { nativeBuildInputs = [ craneLib.cargo ]; }
     (if workspacePath == "" then ''
       export CARGO_HOME="$(mktemp -d)"
-      cd ${dummySrc}
+      cd ${metadataDummySrc}
       cargo metadata --no-deps --format-version 1 --offline >"$out"
     '' else ''
       export CARGO_HOME="$(mktemp -d)"
-      cat ${cargoVendorDir}/config.toml >"$CARGO_HOME/config.toml"
-      cd ${dummySrc}/${workspacePrefix}
+      cat ${metadataCargoVendorDir}/config.toml >"$CARGO_HOME/config.toml"
+      cd ${metadataDummySrc}/${workspacePrefix}
       cargo metadata --format-version 1 --offline >"$out"
     ''))));
 
@@ -199,10 +203,8 @@ let
     (builtins.filter (p: p.source == null) cargoMetadata.packages));
 
   # every local crate dir in the resolve (active-workspace members plus their
-  # external path-deps), split by whether it lives under the active workspace
+  # external path-deps).
   allLocalDirs = builtins.attrNames localDepEdges;
-  workspaceMemberDirs = builtins.filter (d: lib.hasPrefix workspacePrefix d) allLocalDirs;
-  externalDirs = builtins.filter (d: !(lib.hasPrefix workspacePrefix d)) allLocalDirs;
 
   # transitive closure of local path-deps for a source-root-relative crate dir
   closureFrom =
@@ -223,14 +225,18 @@ let
   # absolute path of a source-root-relative crate dir within the source tree
   crateDir = relDir: workspace.src + "/${relDir}";
 
+  mkWorkspaceCargoFiles = workspaceDir: [
+    (fs.maybeMissing (workspaceDir + "/.cargo/config.toml"))
+    (fs.maybeMissing (workspaceDir + "/Cargo.toml"))
+    (fs.maybeMissing (workspaceDir + "/Cargo.lock"))
+  ];
+
+  workspaceCargoFiles = mkWorkspaceCargoFiles workspaceRootPath;
+
   # cargo files of the real source root, needed (in addition to the active
   # workspace's own) when external path-deps inherit `workspace = true` settings
   # from a workspace above a nested one.
-  rootCargoFiles = [
-    (fs.maybeMissing (workspace.src + "/.cargo/config.toml"))
-    (fs.maybeMissing (workspace.src + "/Cargo.toml"))
-    (fs.maybeMissing (workspace.src + "/Cargo.lock"))
-  ];
+  rootCargoFiles = mkWorkspaceCargoFiles workspace.src;
 
   # extra files a crate opts into via `[package.metadata.nix] include = [ ... ]`
   crateIncludeFileset = relDir:
@@ -253,34 +259,52 @@ let
   mkCrateFileset = { dirs, includeExtraSrc }:
     fs.unions (
       (map crateFileset dirs)
-      ++ [
-        (fs.maybeMissing (workspaceRootPath + "/.cargo/config.toml"))
-        (fs.maybeMissing (workspaceRootPath + "/Cargo.toml"))
-        (fs.maybeMissing (workspaceRootPath + "/Cargo.lock"))
-      ]
+      ++ workspaceCargoFiles
       ++ rootCargoFiles
       ++ extraSrc includeExtraSrc
     );
 
-  # fileset for whole-workspace derivations: the active workspace's own sources
-  # and member includes, plus external path-dep sources and the root manifests.
-  workspaceFileset = fs.unions (
-    [ (craneLib.fileset.commonCargoSources workspaceRootPath) ]
-    ++ map crateIncludeFileset workspaceMemberDirs
-    ++ map crateFileset externalDirs
+  # Cargo-metadata-scoped source graph for whole-workspace derivations and
+  # dependency-cache inputs. Standalone nested workspaces under the source root
+  # are not included unless Cargo reports them as local packages or a crate
+  # opts files in via `[package.metadata.nix] include`.
+  graphFileset = fs.unions (
+    workspaceCargoFiles
+    ++ map crateFileset allLocalDirs
     ++ rootCargoFiles
     ++ extraSrc includeExtraSrc
   );
+
+  workspaceFileset = graphFileset;
+
+  scopedSrc = fs.toSource {
+    root = workspace.src;
+    fileset = graphFileset;
+  };
 
   # the exact file list a fileset resolves to, as paths relative to the source root
   srcFileList = fileset:
     map (p: lib.removePrefix "${toString workspace.src}/" (toString p)) (fs.toList fileset);
 
   # Vendor all Cargo dependencies once per profile.
-  cargoVendorDir = craneLib.vendorCargoDeps ({
-    src = workspace.src;
+  metadataCargoVendorDir = craneLib.vendorCargoDeps ({
+    src = metadataScopedSrc;
   } // lib.optionalAttrs (workspacePath != "") {
     cargoLock = workspaceCargoLock;
+  });
+
+  cargoVendorDir = craneLib.vendorCargoDeps ({
+    src = scopedSrc;
+  } // lib.optionalAttrs (workspacePath != "") {
+    cargoLock = workspaceCargoLock;
+  });
+
+  dummySrc = craneLib.mkDummySrc ({
+    src = scopedSrc;
+  } // lib.optionalAttrs (workspacePath != "") {
+    extraDummyScript = ''
+      cp ${workspaceCargoLock} $out/${workspacePrefix}Cargo.lock
+    '';
   });
 
   ####################################################################
