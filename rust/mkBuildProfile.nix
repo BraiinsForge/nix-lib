@@ -55,6 +55,26 @@ let
 
   selectedStdenv = stdenvSelector pkgs;
 
+  # Cross toolchain wiring for crane derivations: crossToolchainEnv plus
+  # the derivation-only pieces, replacing crane's doIncludeCrossToolchainEnv.
+  # Crane puts the build-platform cc in nativeBuildInputs, where nixpkgs
+  # assigns it the host role and feeds it the derivation's host link flags.
+  # Under pkgsStatic that leaks the host-wide `-static` into build-script
+  # links, producing interpreterless host binaries that SIGSEGV on execve.
+  # depsBuildBuild is the correct role for the build-script compiler.
+  crossArgs = crossToolchainEnv // lib.optionalAttrs (selectedStdenv.buildPlatform != selectedStdenv.hostPlatform) (
+    let
+      buildCc = (stdenvSelector pkgs.pkgsBuildBuild).cc;
+      crossCc = "${selectedStdenv.cc}/bin/${selectedStdenv.cc.targetPrefix}cc";
+    in
+    {
+      doIncludeCrossToolchainEnv = false;
+      depsBuildBuild = [ buildCc ];
+      "CC_${lib.replaceStrings [ "-" ] [ "_" ] selectedStdenv.hostPlatform.rust.rustcTarget}" = crossCc;
+      HOST_CC = "${buildCc}/bin/${buildCc.targetPrefix}cc";
+    }
+  );
+
   featuresArgs =
     let
       parts = lib.optional noDefaultFeatures "--no-default-features"
@@ -83,6 +103,7 @@ let
       CARGO_INCREMENTAL = "0"; # incremental compilation is always counterproductive in sandbox
       postPhases = lib.optional timings "timingsInstallPhase" ++ lib.optional sccache "sccacheStatsPhase";
     }
+    // crossArgs
     // workspace.env
     // env
     // lib.optionalAttrs (rustCrossTargetOverride != null) { CARGO_BUILD_TARGET = rustCrossTargetOverride; }
