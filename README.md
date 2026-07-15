@@ -1,11 +1,11 @@
 # NixLib
 
-NixLib is a collection of Nix functions and utilities used by BOS and Tooling.
+NixLib is a collection of Nix functions and utilities used by BOS, BMC and Tooling.
 
 NixLib consists of:
 
 - Cargo workspace build support (`mkWorkspaceConfig`, `mkBuildProfile`, `buildCrate`)
-  - Implemented on top of [crane] and [docker-spider]
+  - Implemented on top of [crane]
   - Includes pre-configured braiins registry
 - Wrapper around [treefmt] and [treefmt-nix]
   - With simple interface for enabling formatters for individual languages
@@ -25,6 +25,5 @@ NixLib consists of:
 - https://gitlab.ii.zone/frontend/main
 
 [crane]: https://github.com/ipetkov/crane
-[docker-spider]: https://gitlab.ii.zone/bos/docker-spider
 [treefmt]: https://github.com/numtide/treefmt
 [treefmt-nix]: https://github.com/numtide/treefmt-nix
