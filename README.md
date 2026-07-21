@@ -15,15 +15,6 @@ NixLib consists of:
 
 ### List of Projects Using Nix
 
-- https://gitlab.ii.zone/tooling/tooling
-- https://gitlab.ii.zone/bos/bos-main
-- https://gitlab.ii.zone/nix/rust-template
-- https://gitlab.ii.zone/bos/crafwler
-- https://gitlab.ii.zone/nix/ci-tools
-- https://gitlab.ii.zone/tooling/power-price-poller
-- https://gitlab.ii.zone/braiins-manager/rust-backend
-- https://gitlab.ii.zone/frontend/main
-
 [crane]: https://github.com/ipetkov/crane
 [treefmt]: https://github.com/numtide/treefmt
 [treefmt-nix]: https://github.com/numtide/treefmt-nix
