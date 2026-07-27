@@ -21,6 +21,7 @@ in
     mermaid = true;
     justfile = true;
     shell = true;
+    links = true;
     config.exclude = [ "${exclude_glob}" ];
   }
 EOF
@@ -35,6 +36,7 @@ in
     mermaid = true;
     justfile = true;
     shell = true;
+    links = true;
   }
 EOF
         )

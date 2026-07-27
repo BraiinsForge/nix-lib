@@ -59,6 +59,8 @@ run_case "fail-shell" fail "$DEFAULT_CHECKER"
 run_case "excluded-shell" pass "$EXCLUDED_CHECKER"
 run_case "content-composition" pass "$DEFAULT_CHECKER"
 run_case "ignored-extension" pass "$DEFAULT_CHECKER"
+run_case "pass-links" pass "$DEFAULT_CHECKER"
+run_case "fail-links" fail "$DEFAULT_CHECKER"
 
 echo ""
 echo "All checker tests passed!"

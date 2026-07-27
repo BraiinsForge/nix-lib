@@ -5,13 +5,16 @@ pkgs:
 , shell ? false
   # `just --fmt --check` is marked unstable upstream (requires `--unstable`); opt-in.
 , justfile ? false
+  # Cross-references between docs rot silently as files move.
+  # Opt-in, since an existing tree is unlikely to be link-clean the day it is switched on.
+, links ? false
 , config ? { }
 }:
 let
   lib = pkgs.lib;
 
   args = {
-    inherit mermaid shell justfile;
+    inherit mermaid shell justfile links;
     config = ({ exclude ? [ ] }: { inherit exclude; }) config;
   };
 
@@ -48,6 +51,21 @@ let
       # Does not modify the file. `--fmt` is unstable, hence `--unstable`.
       command = pkgs.writeShellScript "justfile-check" ''
         ${lib.getExe pkgs.just} --unstable --fmt --check --justfile "$1"
+      '';
+    }
+    {
+      name = "links";
+      enabled = args.links;
+      includes = [ "*.md" "*.markdown" ];
+      # `--offline` resolves targets on disk and skips anything remote,
+      # so the check stays hermetic and never fails on a flaky host.
+      #
+      # lychee builds its HTTP client at startup even when `--offline` means it
+      # will never be used, and that build needs a CA bundle the scrubbed
+      # runtime env does not carry.
+      command = pkgs.writeShellScript "link-check" ''
+        export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+        exec ${lib.getExe pkgs.lychee} --offline --no-progress "$1"
       '';
     }
     {
