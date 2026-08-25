@@ -75,11 +75,11 @@
     },
     "nix-source-info": {
       "locked": {
-        "lastModified": 1781213927,
-        "narHash": "sha256-9JHYxgbXdTaOjhIHQtZc8PthXZwNg57EERuNMH8zFvk=",
+        "lastModified": 1787672917,
+        "narHash": "sha256-AvBrFoS/sbcMqQUUYMliO27B3P4CfHVhPCvTqrEGOhU=",
         "ref": "refs/heads/master",
-        "rev": "1ddc46d0e0b6bbc1809b06aab7a2320ce95543ba",
-        "revCount": 4,
+        "rev": "771bd13a070ada6b4c9542e8285111fd31cf4150",
+        "revCount": 6,
         "type": "git",
         "url": "ssh://git@gitlab.ii.zone/nix/source-info"
       },
