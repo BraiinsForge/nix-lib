@@ -453,10 +453,8 @@ let
     , checks ? [ "bans" "licenses" "sources" ]
     }: craneLib.cargoDeny (commonArgs // workspaceCommonArgs // {
       version = "0.0.0";
-      cargoDenyChecks = lib.concatStringsSep " " (
-        lib.optional (config != false) "--config ${config}"
-          ++ lib.toList checks
-      );
+      cargoDenyExtraArgs = lib.optionalString (config != false) "--config ${config}";
+      cargoDenyChecks = lib.concatStringsSep " " (lib.toList checks);
       fixupPhase = ":";
       doCheck = true;
     });

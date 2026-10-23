@@ -23,6 +23,6 @@ let
   };
 in
 assert pkgs.lib.assertMsg
-  (pkgs.lib.hasInfix "deny  check --config ../deny.toml sources" cargoDeny.buildPhase)
-  "cargo-deny config must follow the check subcommand";
+  (pkgs.lib.hasInfix "deny --config ../deny.toml check sources" cargoDeny.buildPhase)
+  "cargo-deny config must precede the check subcommand";
 true
